@@ -1,0 +1,143 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../app/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id            Int        @id @default(autoincrement())
+  email         String     @unique
+  password_hash String
+  name          String
+  life_stage    String?
+  family_type   String?
+  created_at    DateTime   @default(now())
+
+  courses   Course[]
+  favorites Favorite[]
+  reviews   Review[]
+
+  @@map("users")
+}
+
+model Region {
+  id               Int      @id @default(autoincrement())
+  name             String
+  parent_region_id Int?
+
+  parent   Region?  @relation("RegionHierarchy", fields: [parent_region_id], references: [id])
+  children Region[] @relation("RegionHierarchy")
+  places   Place[]
+  courses  Course[]
+
+  @@map("regions")
+}
+
+model Theme {
+  id      Int      @id @default(autoincrement())
+  name    String   @unique
+  courses Course[]
+
+  @@map("themes")
+}
+
+model LifeStageTag {
+  id   Int    @id @default(autoincrement())
+  name String @unique
+
+  course_tags CourseTag[]
+
+  @@map("life_stage_tags")
+}
+
+model Place {
+  id          Int     @id @default(autoincrement())
+  name        String
+  address     String
+  lat         Float
+  lng         Float
+  region_id   Int
+  category    String
+  description String?
+
+  region       Region        @relation(fields: [region_id], references: [id])
+  course_places CoursPlace[]
+
+  @@map("places")
+}
+
+model Course {
+  id                Int      @id @default(autoincrement())
+  title             String
+  description       String?
+  region_id         Int
+  theme_id          Int
+  estimated_minutes Int
+  created_by        Int
+  created_at        DateTime @default(now())
+
+  region        Region       @relation(fields: [region_id], references: [id])
+  theme         Theme        @relation(fields: [theme_id], references: [id])
+  creator       User         @relation(fields: [created_by], references: [id])
+  course_places CoursPlace[]
+  course_tags   CourseTag[]
+  favorites     Favorite[]
+  reviews       Review[]
+
+  @@map("courses")
+}
+
+model CoursPlace {
+  id                    Int  @id @default(autoincrement())
+  course_id             Int
+  place_id              Int
+  order_index           Int
+  travel_minutes_to_next Int?
+
+  course Course @relation(fields: [course_id], references: [id], onDelete: Cascade)
+  place  Place  @relation(fields: [place_id], references: [id])
+
+  @@unique([course_id, order_index])
+  @@map("course_places")
+}
+
+model CourseTag {
+  course_id Int
+  tag_id    Int
+
+  course Course       @relation(fields: [course_id], references: [id], onDelete: Cascade)
+  tag    LifeStageTag @relation(fields: [tag_id], references: [id])
+
+  @@id([course_id, tag_id])
+  @@map("course_tags")
+}
+
+model Favorite {
+  id         Int      @id @default(autoincrement())
+  user_id    Int
+  course_id  Int
+  created_at DateTime @default(now())
+
+  user   User   @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  course Course @relation(fields: [course_id], references: [id], onDelete: Cascade)
+
+  @@unique([user_id, course_id])
+  @@map("favorites")
+}
+
+model Review {
+  id         Int      @id @default(autoincrement())
+  user_id    Int
+  course_id  Int
+  rating     Int
+  content    String
+  created_at DateTime @default(now())
+
+  user   User   @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  course Course @relation(fields: [course_id], references: [id], onDelete: Cascade)
+
+  @@map("reviews")
+}
