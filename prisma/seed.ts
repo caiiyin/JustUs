@@ -1,214 +1,398 @@
 import bcrypt from "bcrypt";
-import { PrismaClient } from "../app/generated/prisma/client";
+import { PrismaClient, LifeStageTag } from "../app/generated/prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
 
 const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL! });
 const prisma = new PrismaClient({ adapter });
 
 async function main() {
-  console.log("🌱 시드 데이터 삽입 시작...");
+  console.log("🌱 시드 데이터 삽입 시작 (CONTENT.md 기준)...");
 
-  // ──────────────────────────────────────────
-  // 1. Regions (시/도 레벨)
-  // ──────────────────────────────────────────
-  const [seoul, gyeonggi, busan] = await Promise.all([
-    prisma.region.upsert({
-      where: { id: 1 },
-      update: {},
-      create: { id: 1, name: "서울특별시" },
-    }),
-    prisma.region.upsert({
-      where: { id: 2 },
-      update: {},
-      create: { id: 2, name: "경기도" },
-    }),
-    prisma.region.upsert({
-      where: { id: 3 },
-      update: {},
-      create: { id: 3, name: "부산광역시" },
-    }),
-  ]);
-
-  // 시/군/구 레벨 (자기참조 예시)
-  const [jongno, yongsan, suwon, haeundae] = await Promise.all([
-    prisma.region.upsert({
-      where: { id: 4 },
-      update: {},
-      create: { id: 4, name: "종로구", parent_region_id: seoul.id },
-    }),
-    prisma.region.upsert({
-      where: { id: 5 },
-      update: {},
-      create: { id: 5, name: "용산구", parent_region_id: seoul.id },
-    }),
-    prisma.region.upsert({
-      where: { id: 6 },
-      update: {},
-      create: { id: 6, name: "수원시", parent_region_id: gyeonggi.id },
-    }),
-    prisma.region.upsert({
-      where: { id: 7 },
-      update: {},
-      create: { id: 7, name: "해운대구", parent_region_id: busan.id },
-    }),
-  ]);
-
-  console.log("✅ Region 삽입 완료");
-
-  // ──────────────────────────────────────────
-  // 2. Themes
-  // ──────────────────────────────────────────
-  const [themeNature, themeCulture, themeFood, themeIndoor] = await Promise.all([
-    prisma.theme.upsert({ where: { name: "자연" }, update: {}, create: { name: "자연" } }),
-    prisma.theme.upsert({ where: { name: "문화" }, update: {}, create: { name: "문화" } }),
-    prisma.theme.upsert({ where: { name: "맛집" }, update: {}, create: { name: "맛집" } }),
-    prisma.theme.upsert({ where: { name: "실내외" }, update: {}, create: { name: "실내외" } }),
-  ]);
-
-  console.log("✅ Theme 삽입 완료");
-
-  // ──────────────────────────────────────────
-  // 3. LifeStageTags
-  // ──────────────────────────────────────────
-  const [tagInfant, tagPet, tagSenior, tagCouple, tagSolo] = await Promise.all([
-    prisma.lifeStageTag.upsert({ where: { name: "영유아 동반" }, update: {}, create: { name: "영유아 동반" } }),
-    prisma.lifeStageTag.upsert({ where: { name: "반려동물 동반" }, update: {}, create: { name: "반려동물 동반" } }),
-    prisma.lifeStageTag.upsert({ where: { name: "시니어" }, update: {}, create: { name: "시니어" } }),
-    prisma.lifeStageTag.upsert({ where: { name: "커플" }, update: {}, create: { name: "커플" } }),
-    prisma.lifeStageTag.upsert({ where: { name: "혼자" }, update: {}, create: { name: "혼자" } }),
-  ]);
-
-  console.log("✅ LifeStageTag 삽입 완료");
-
-  // ──────────────────────────────────────────
-  // 4. Places (실제 위경도 포함)
-  // ──────────────────────────────────────────
+  // ─────────────────────────────────────────────────────
+  // 1. Places  P01~P20  (화성시 관광지)
+  // ─────────────────────────────────────────────────────
   const placesData = [
-    // 서울 종로구
     {
-      name: "경복궁",
-      address: "서울특별시 종로구 사직로 161",
-      lat: 37.5796,
-      lng: 126.9770,
-      region_id: jongno.id,
-      category: "역사/문화",
-      description: "조선 왕조의 정궁으로 서울의 대표 문화유산",
+      name: "용주사(효행박물관)",
+      address: "경기도 화성시 용주로 136",
+      lat: 37.2013, lng: 126.9912,
+      category: "역사·문화",
+      phone: "031-234-0040",
+      hours: "상시 개방",
+      image: "places/yongjusa.jpg",
+      tags: ["역사", "문화", "사찰", "효행", "템플스테이"],
     },
     {
-      name: "북촌한옥마을",
-      address: "서울특별시 종로구 계동길 37",
-      lat: 37.5826,
-      lng: 126.9851,
-      region_id: jongno.id,
-      category: "역사/문화",
-      description: "전통 한옥이 밀집한 서울 대표 문화 명소",
+      name: "화성 융릉과 건릉",
+      address: "경기도 화성시 효행로481번길 21",
+      lat: 37.2028, lng: 126.9894,
+      category: "역사·문화",
+      phone: "031-222-0142",
+      hours: "09:00~18:00 (월 휴무)",
+      image: "places/yunggeon-neung.jpg",
+      tags: ["역사", "왕릉", "무장애편의시설", "산책", "유네스코"],
     },
     {
-      name: "청계천",
-      address: "서울특별시 종로구 청계광장로 1",
-      lat: 37.5700,
-      lng: 126.9777,
-      region_id: jongno.id,
-      category: "자연/산책",
-      description: "도심 속 산책로이자 시민 휴식 공간",
-    },
-    // 서울 용산구
-    {
-      name: "국립중앙박물관",
-      address: "서울특별시 용산구 서빙고로 137",
-      lat: 37.5238,
-      lng: 126.9805,
-      region_id: yongsan.id,
-      category: "박물관",
-      description: "우리나라 최대 규모의 국립 박물관",
+      name: "화성시공예문화관",
+      address: "경기도 화성시 우정읍 고온리안길 24-9",
+      lat: 37.1695, lng: 126.8128,
+      category: "체험·액티비티",
+      phone: "031-366-8224",
+      hours: "09:00~18:00 (월 휴무)",
+      image: "places/craft-center.jpg",
+      tags: ["체험", "공예", "어린이", "교육", "전시"],
     },
     {
-      name: "이태원 거리",
-      address: "서울특별시 용산구 이태원로 177",
-      lat: 37.5349,
-      lng: 126.9945,
-      region_id: yongsan.id,
-      category: "맛집/쇼핑",
-      description: "다국적 음식과 문화가 공존하는 거리",
-    },
-    // 경기 수원
-    {
-      name: "수원화성",
-      address: "경기도 수원시 장안구 영화동 320-2",
-      lat: 37.2882,
-      lng: 127.0133,
-      region_id: suwon.id,
-      category: "역사/문화",
-      description: "유네스코 세계문화유산, 조선 후기 성곽",
+      name: "매향리평화기념관·평화생태공원",
+      address: "경기도 화성시 우정읍 고온리안길 24-11",
+      lat: 37.1701, lng: 126.8126,
+      category: "역사·문화",
+      phone: "031-5189-7410",
+      hours: "10:00~18:00 (월 휴무)",
+      image: "places/maehyang-peace.jpg",
+      tags: ["역사", "평화", "생태", "무장애편의시설", "반려동물동반가능"],
     },
     {
-      name: "광교호수공원",
-      address: "경기도 수원시 영통구 광교호수공원로 180",
-      lat: 37.2908,
-      lng: 127.0488,
-      region_id: suwon.id,
-      category: "자연/산책",
-      description: "수원 최대 규모 호수공원, 반려동물 동반 가능",
-    },
-    // 부산 해운대
-    {
-      name: "해운대 해수욕장",
-      address: "부산광역시 해운대구 해운대해변로 264",
-      lat: 35.1587,
-      lng: 129.1604,
-      region_id: haeundae.id,
-      category: "자연/해변",
-      description: "국내 최대 규모의 해수욕장",
+      name: "서해랑제부도해상케이블카",
+      address: "경기도 화성시 서신면 전곡항로 1-10",
+      lat: 37.1854, lng: 126.7113,
+      category: "자연·경관",
+      phone: "1833-4997",
+      hours: "09:00~19:00 (주말·공휴일 20:00)",
+      image: "places/seohaerang-cablecar.jpg",
+      tags: ["케이블카", "서해", "경관", "반려동물동반가능", "한국관광100선"],
     },
     {
-      name: "해동용궁사",
-      address: "부산광역시 기장군 기장읍 용궁길 86",
-      lat: 35.1877,
-      lng: 129.2220,
-      region_id: haeundae.id,
-      category: "역사/문화",
-      description: "바다 위에 세워진 아름다운 사찰",
+      name: "제부도 워터워크",
+      address: "경기도 화성시 서신면 송교리 377-46",
+      lat: 37.1746, lng: 126.7281,
+      category: "자연·경관",
+      phone: "031-355-3924",
+      hours: "상시 개방 (물때 확인 필요)",
+      image: "places/jebu-waterwalk.jpg",
+      tags: ["바다", "갯벌", "포토스팟", "조망"],
     },
     {
-      name: "광안리 어묵·분식 골목",
-      address: "부산광역시 수영구 광안동 광안해변로 219",
-      lat: 35.1530,
-      lng: 129.1186,
-      region_id: haeundae.id,
-      category: "맛집",
-      description: "부산 명물 어묵과 분식을 즐길 수 있는 골목",
+      name: "제부리어촌체험마을",
+      address: "경기도 화성시 서신면 해안길 210",
+      lat: 37.1720, lng: 126.7242,
+      category: "체험·액티비티",
+      phone: "0507-1306-6604",
+      hours: "10:00~22:00 (물때 따라 변동)",
+      image: "places/jebu-village.jpg",
+      tags: ["갯벌체험", "어촌", "가족", "어린이"],
+    },
+    {
+      name: "제부도 빨간등대",
+      address: "경기도 화성시 서신면 제부리 289-20",
+      lat: 37.1706, lng: 126.7251,
+      category: "자연·경관",
+      phone: "031-357-3724",
+      hours: "상시 개방",
+      image: "places/jebu-lighthouse.jpg",
+      tags: ["포토스팟", "노을", "서해", "산책"],
+    },
+    {
+      name: "전곡항·제부마리나 요트체험",
+      address: "경기도 화성시 서신면 전곡항로 5",
+      lat: 37.1857, lng: 126.7102,
+      category: "체험·액티비티",
+      phone: null,
+      hours: "운항 시간표 별도 확인",
+      image: "places/jeongok-marina.jpg",
+      tags: ["요트", "마리나", "레저", "서해"],
+    },
+    {
+      name: "궁평항 수산물직판장",
+      address: "경기도 화성시 서신면 궁평항로 1049-24",
+      lat: 37.1935, lng: 126.7199,
+      category: "미식·시장",
+      phone: "031-355-9692",
+      hours: "08:00~22:00 (A동 화요일·B동 수요일 휴무)",
+      image: "places/gungpyeong-market.jpg",
+      tags: ["해산물", "시장", "맛집", "대하"],
+    },
+    {
+      name: "궁평오솔로관광지",
+      address: "경기도 화성시 서신면 궁평리 511-3",
+      lat: 37.1943, lng: 126.7196,
+      category: "자연·경관",
+      phone: "031-369-2069",
+      hours: "상시 개방",
+      image: "places/gungpyeong-sol.jpg",
+      tags: ["해송숲", "산책", "서해", "낙조", "반려동물동반가능"],
+    },
+    {
+      name: "남양성모성지",
+      address: "경기도 화성시 남양읍 남양성지로 112",
+      lat: 37.2144, lng: 126.7812,
+      category: "역사·문화",
+      phone: "031-356-5880",
+      hours: "산책로 09:00~18:00 / 대성당 09:30~16:00",
+      image: "places/namyang-shrine.jpg",
+      tags: ["성지", "건축", "산책", "사색"],
+    },
+    {
+      name: "소다미술관",
+      address: "경기도 화성시 효행로707번길 30",
+      lat: 37.2143, lng: 126.9834,
+      category: "예술·전시",
+      phone: "0507-1420-9127",
+      hours: "10:00~18:00 (일·월 휴무)",
+      image: "places/soda-museum.jpg",
+      tags: ["미술관", "예술", "전시", "무장애편의시설"],
+    },
+    {
+      name: "화성 공룡알화석산지",
+      address: "경기도 화성시 송산면 공룡로 659",
+      lat: 37.2200, lng: 126.7545,
+      category: "자연·경관",
+      phone: "031-5189-3805",
+      hours: "09:00~17:00 (월 휴무)",
+      image: "places/dinosaur-fossil.jpg",
+      tags: ["화석", "공룡", "교육", "자연", "어린이"],
+    },
+    {
+      name: "화성시 역사박물관",
+      address: "경기도 화성시 향남읍 행정동로 96",
+      lat: 37.2091, lng: 126.8556,
+      category: "역사·문화",
+      phone: "031-5189-7038",
+      hours: "10:00~18:00 (월 휴무)",
+      image: "places/history-museum.jpg",
+      tags: ["박물관", "역사", "교육", "문화"],
+    },
+    {
+      name: "비봉습지공원",
+      address: "경기도 화성시 비봉면 유포리",
+      lat: 37.2536, lng: 126.8233,
+      category: "자연·경관",
+      phone: "031-8047-5078",
+      hours: "10:00~18:00 (월 휴무)",
+      image: "places/bibong-wetland.jpg",
+      tags: ["습지", "생태", "산책", "자연"],
+    },
+    {
+      name: "발안만세시장",
+      address: "경기도 화성시 향남읍 평2길 7 일대",
+      lat: 37.2062, lng: 126.8531,
+      category: "미식·시장",
+      phone: "031-352-0120",
+      hours: "09:00~21:00 (상설, 5일장 5·10일)",
+      image: "places/balan-market.jpg",
+      tags: ["시장", "5일장", "특산물", "반려동물동반가능"],
+    },
+    {
+      name: "화성시 우리꽃식물원",
+      address: "경기도 화성시 팔탄면 3.1만세로 777-17",
+      lat: 37.2384, lng: 126.8943,
+      category: "자연·경관",
+      phone: "031-5189-6160",
+      hours: "09:00~18:00 (계절별 상이)",
+      image: "places/flower-garden.jpg",
+      tags: ["식물원", "꽃", "자생화", "온실", "자연"],
+    },
+    {
+      name: "제부도 전통양조",
+      address: "경기도 화성시 서신면 제부로 441-7",
+      lat: 37.1755, lng: 126.7265,
+      category: "체험·액티비티",
+      phone: "010-7732-2771",
+      hours: "09:00~17:00 (일·월 휴무, 체험 사전예약)",
+      image: "places/jebu-brewery.jpg",
+      tags: ["발효체험", "양조", "공예", "포도식초"],
+    },
+    {
+      name: "서해마루 유스호스텔",
+      address: "경기도 화성시 서신면 궁평관광로153번길 39",
+      lat: 37.1941, lng: 126.7193,
+      category: "숙박",
+      phone: "031-357-0924",
+      hours: "체크인 15:00 / 체크아웃 11:00",
+      image: "places/seohae-hostel.jpg",
+      tags: ["숙박", "유스호스텔", "가족", "수영장"],
     },
   ];
 
-  const places: Record<string, { id: number }> = {};
+  const places: number[] = [];
   for (const data of placesData) {
-    const place = await prisma.place.upsert({
-      where: {
-        // name+address 복합 upsert 대신 findFirst로 처리
-        id: (await prisma.place.findFirst({ where: { name: data.name } }))?.id ?? 0,
-      },
+    const p = await prisma.place.upsert({
+      where: { id: places.length + 1 },
       update: {},
-      create: data,
+      create: { ...data, id: places.length + 1 },
     });
-    places[data.name] = place;
+    places.push(p.id);
   }
+  console.log(`✅ Place ${places.length}개 삽입 완료`);
 
-  console.log("✅ Place 삽입 완료");
+  // Place ID 헬퍼: P(n) → 실제 DB id (1-indexed)
+  const P = (n: number) => places[n - 1];
 
-  // ──────────────────────────────────────────
-  // 5. Test Users
-  // ──────────────────────────────────────────
-  const SALT_ROUNDS = 10;
-  const [userA, userB] = await Promise.all([
+  // ─────────────────────────────────────────────────────
+  // 2. Courses  C01~C08
+  // ─────────────────────────────────────────────────────
+  const coursesData: {
+    id: number;
+    title: string;
+    description: string;
+    region: string;
+    theme: string;
+    lifeCycleTags: LifeStageTag[];
+    duration: string;
+    placeIds: number[];
+  }[] = [
+    {
+      id: 1,
+      title: "화성 올인원 패키지 — 역사와 바다, 오감 여행",
+      description:
+        "조선 왕실의 효심이 깃든 융릉·건릉에서 출발해 평화생태공원을 거닐고, 서해 절경 해상케이블카로 하루를 마무리하는 화성 대표 코스. 역사·자연·미식을 한 번에 경험할 수 있는 올인원 패키지 여행.",
+      region: "화성시 전역",
+      theme: "역사, 자연, 미식",
+      lifeCycleTags: [
+        LifeStageTag.COUPLE_NEWLYWED,
+        LifeStageTag.MIDDLE_AGED,
+        LifeStageTag.YOUNG_SOLO,
+      ],
+      duration: "당일 (약 6시간)",
+      placeIds: [P(2), P(4), P(5)],
+    },
+    {
+      id: 2,
+      title: "화성 쉼표 여행 — 온천·해송·발효 힐링 코스",
+      description:
+        "무봉산 자연휴양림 산림욕으로 하루를 열고, 율암온천의 따뜻한 용천수로 피로를 풀며, 서해 해송 숲 궁평오솔로에서 산책으로 여정을 마무리하는 힐링 코스. 몸과 마음의 재충전이 필요한 모든 이에게 추천.",
+      region: "화성시 동탄·서신 일대",
+      theme: "힐링, 온천, 자연",
+      lifeCycleTags: [
+        LifeStageTag.COUPLE_NEWLYWED,
+        LifeStageTag.MIDDLE_AGED,
+        LifeStageTag.SENIOR,
+      ],
+      duration: "1박 2일",
+      placeIds: [P(11), P(10), P(16)],
+    },
+    {
+      id: 3,
+      title: "화성 감성 여행 — 예술과 바다에 물들다",
+      description:
+        "이색 사립미술관 소다미술관에서 시작해 마리오 보타의 건축미가 빛나는 남양성모성지를 거닌 뒤, 서해랑케이블카와 제부도 워터워크에서 인생 사진을 완성하는 감성 포토 코스.",
+      region: "화성시 봉담·남양·서신 일대",
+      theme: "감성, 포토, 예술, 해양",
+      lifeCycleTags: [
+        LifeStageTag.YOUNG_SOLO,
+        LifeStageTag.COUPLE_NEWLYWED,
+      ],
+      duration: "당일 (약 7시간)",
+      placeIds: [P(13), P(12), P(5), P(6)],
+    },
+    {
+      id: 4,
+      title: "제부도 원데이 트립 — 바다와 갯벌, 노을 여행",
+      description:
+        "하루 두 번 열리는 바다 위 제부도 워터워크에서 시작해 갯벌 체험, 어촌 밥상, 빨간등대 노을까지 제부도 한 곳에서 자연·미식·포토를 모두 즐기는 가족 친화 코스.",
+      region: "화성시 서신면 제부도",
+      theme: "해양, 갯벌 체험, 노을, 가족",
+      lifeCycleTags: [
+        LifeStageTag.CHILDREN_FAMILY,
+        LifeStageTag.COUPLE_NEWLYWED,
+        LifeStageTag.YOUNG_SOLO,
+      ],
+      duration: "당일 (약 6시간)",
+      placeIds: [P(6), P(7), P(8)],
+    },
+    {
+      id: 5,
+      title: "펫프렌들리 화성 — 댕댕이와 함께하는 바다 여행",
+      description:
+        "반려견 전용 시설이 갖춰진 발안만세시장을 시작으로 해송 숲 궁평오솔로에서 산책을 즐기고, 밀물·썰물이 빚어내는 갯벌에서 반려견과 특별한 하루를 보내는 펫프렌들리 코스.",
+      region: "화성시 향남·서신 일대",
+      theme: "반려동물, 자연, 산책, 해양",
+      lifeCycleTags: [
+        LifeStageTag.PET_FAMILY,
+        LifeStageTag.YOUNG_SOLO,
+        LifeStageTag.COUPLE_NEWLYWED,
+      ],
+      duration: "1박 2일",
+      placeIds: [P(17), P(11), P(10)],
+    },
+    {
+      id: 6,
+      title: "화성 시간여행 — 공룡시대에서 조선까지",
+      description:
+        "화성시 역사박물관 도슨트 투어로 역사 여정을 시작하고, 일제강점기 평화의 흔적 매향리공원을 지나, 수천만 년 전 공룡알화석산지에서 지구의 시간을 되새기는 역사·교육 중심 코스.",
+      region: "화성시 향남·우정·송산 일대",
+      theme: "역사, 교육, 문화유산",
+      lifeCycleTags: [
+        LifeStageTag.CHILDREN_FAMILY,
+        LifeStageTag.TEEN,
+        LifeStageTag.MIDDLE_AGED,
+      ],
+      duration: "당일 (약 7시간)",
+      placeIds: [P(15), P(4), P(14)],
+    },
+    {
+      id: 7,
+      title: "그린&소울 로드 — 꽃과 습지, 사색의 치유 여행",
+      description:
+        "한국 자생화 300여 종이 피어나는 우리꽃식물원에서 사계절 꽃향기를 누리고, 고요한 남양성모성지에서 사색을 즐기며, 비봉습지공원 갈대 산책로를 걸으며 일상의 피로를 내려놓는 느린 여행.",
+      region: "화성시 팔탄·남양·비봉 일대",
+      theme: "자연, 힐링, 사색, 꽃",
+      lifeCycleTags: [
+        LifeStageTag.COUPLE_NEWLYWED,
+        LifeStageTag.MIDDLE_AGED,
+        LifeStageTag.SENIOR,
+      ],
+      duration: "1박 2일",
+      placeIds: [P(18), P(12), P(16)],
+    },
+    {
+      id: 8,
+      title: "무장애 힐링 여행 — 누구에게나 열린 화성 코스",
+      description:
+        "휠체어 동선이 확보된 소다미술관·융릉·남양성모성지를 거쳐 서해랑케이블카의 장쾌한 서해 조망을 즐기고, 무장애 산책로가 정비된 매향리평화생태공원으로 마무리하는 배리어프리 코스.",
+      region: "화성시 봉담·남양·서신 일대",
+      theme: "무장애, 힐링, 역사, 자연",
+      lifeCycleTags: [
+        LifeStageTag.SENIOR,
+        LifeStageTag.MIDDLE_AGED,
+        LifeStageTag.CHILDREN_FAMILY,
+      ],
+      duration: "당일 (약 7시간)",
+      placeIds: [P(13), P(2), P(5), P(4)],
+    },
+  ];
+
+  for (const { placeIds, ...courseData } of coursesData) {
+    const course = await prisma.course.upsert({
+      where: { id: courseData.id },
+      update: {},
+      create: courseData,
+    });
+
+    await prisma.courseItem.createMany({
+      data: placeIds.map((placeId, i) => ({
+        courseId: course.id,
+        placeId,
+        order: i + 1,
+      })),
+      skipDuplicates: true,
+    });
+  }
+  console.log(`✅ Course ${coursesData.length}개 + CourseItem 삽입 완료`);
+
+  // ─────────────────────────────────────────────────────
+  // 3. Test Users
+  // ─────────────────────────────────────────────────────
+  const SALT = 10;
+  await Promise.all([
     prisma.user.upsert({
       where: { email: "test1@nadle.kr" },
       update: {},
       create: {
         email: "test1@nadle.kr",
-        password_hash: await bcrypt.hash("Test1234!", SALT_ROUNDS),
+        passwordHash: await bcrypt.hash("Test1234!", SALT),
         name: "김나들",
-        life_stage: "영유아_부모",
-        family_type: "핵가족",
+        lifeStageTags: [LifeStageTag.INFANT_FAMILY, LifeStageTag.CHILDREN_FAMILY],
       },
     }),
     prisma.user.upsert({
@@ -216,176 +400,16 @@ async function main() {
       update: {},
       create: {
         email: "test2@nadle.kr",
-        password_hash: await bcrypt.hash("Test5678!", SALT_ROUNDS),
+        passwordHash: await bcrypt.hash("Test5678!", SALT),
         name: "이코스",
-        life_stage: "시니어",
-        family_type: "2인가구",
+        lifeStageTags: [LifeStageTag.SENIOR, LifeStageTag.MIDDLE_AGED],
       },
     }),
   ]);
-
-  console.log("✅ User 삽입 완료");
-
-  // ──────────────────────────────────────────
-  // 6. Courses + CoursePlaces + CourseTags
-  // ──────────────────────────────────────────
-
-  // Course 1: 서울 종로 역사문화 코스 (영유아 동반)
-  const course1 = await prisma.course.upsert({
-    where: { id: 1 },
-    update: {},
-    create: {
-      id: 1,
-      title: "서울 종로 역사문화 나들이",
-      description: "경복궁부터 북촌한옥마을까지, 아이와 함께하는 서울 역사 탐방 코스",
-      region_id: jongno.id,
-      theme_id: themeCulture.id,
-      estimated_minutes: 210,
-      created_by: userA.id,
-    },
-  });
-
-  await prisma.coursPlace.createMany({
-    data: [
-      { course_id: course1.id, place_id: places["경복궁"].id, order_index: 1, travel_minutes_to_next: 20 },
-      { course_id: course1.id, place_id: places["북촌한옥마을"].id, order_index: 2, travel_minutes_to_next: 15 },
-      { course_id: course1.id, place_id: places["청계천"].id, order_index: 3, travel_minutes_to_next: null },
-    ],
-    skipDuplicates: true,
-  });
-
-  await prisma.courseTag.createMany({
-    data: [
-      { course_id: course1.id, tag_id: tagInfant.id },
-      { course_id: course1.id, tag_id: tagCouple.id },
-    ],
-    skipDuplicates: true,
-  });
-
-  // Course 2: 용산 박물관·문화 코스 (시니어)
-  const course2 = await prisma.course.upsert({
-    where: { id: 2 },
-    update: {},
-    create: {
-      id: 2,
-      title: "용산 박물관 & 이태원 문화 탐방",
-      description: "국립중앙박물관 관람 후 이태원 거리에서 다양한 맛집 탐방",
-      region_id: yongsan.id,
-      theme_id: themeFood.id,
-      estimated_minutes: 180,
-      created_by: userB.id,
-    },
-  });
-
-  await prisma.coursPlace.createMany({
-    data: [
-      { course_id: course2.id, place_id: places["국립중앙박물관"].id, order_index: 1, travel_minutes_to_next: 25 },
-      { course_id: course2.id, place_id: places["이태원 거리"].id, order_index: 2, travel_minutes_to_next: null },
-    ],
-    skipDuplicates: true,
-  });
-
-  await prisma.courseTag.createMany({
-    data: [{ course_id: course2.id, tag_id: tagSenior.id }],
-    skipDuplicates: true,
-  });
-
-  // Course 3: 수원 역사 + 자연 코스 (반려동물)
-  const course3 = await prisma.course.upsert({
-    where: { id: 3 },
-    update: {},
-    create: {
-      id: 3,
-      title: "수원화성 & 광교호수 반려동물 산책",
-      description: "세계문화유산 화성 성곽길을 걷고 광교호수공원에서 반려동물과 여유로운 산책",
-      region_id: suwon.id,
-      theme_id: themeNature.id,
-      estimated_minutes: 240,
-      created_by: userA.id,
-    },
-  });
-
-  await prisma.coursPlace.createMany({
-    data: [
-      { course_id: course3.id, place_id: places["수원화성"].id, order_index: 1, travel_minutes_to_next: 30 },
-      { course_id: course3.id, place_id: places["광교호수공원"].id, order_index: 2, travel_minutes_to_next: null },
-    ],
-    skipDuplicates: true,
-  });
-
-  await prisma.courseTag.createMany({
-    data: [
-      { course_id: course3.id, tag_id: tagPet.id },
-      { course_id: course3.id, tag_id: tagSolo.id },
-    ],
-    skipDuplicates: true,
-  });
-
-  // Course 4: 부산 해양 + 문화 코스 (커플)
-  const course4 = await prisma.course.upsert({
-    where: { id: 4 },
-    update: {},
-    create: {
-      id: 4,
-      title: "부산 해안 커플 나들이",
-      description: "해동용궁사에서 영적 분위기를 느끼고, 해운대 해수욕장에서 낭만적인 시간을 보내는 코스",
-      region_id: haeundae.id,
-      theme_id: themeNature.id,
-      estimated_minutes: 200,
-      created_by: userB.id,
-    },
-  });
-
-  await prisma.coursPlace.createMany({
-    data: [
-      { course_id: course4.id, place_id: places["해동용궁사"].id, order_index: 1, travel_minutes_to_next: 40 },
-      { course_id: course4.id, place_id: places["해운대 해수욕장"].id, order_index: 2, travel_minutes_to_next: null },
-    ],
-    skipDuplicates: true,
-  });
-
-  await prisma.courseTag.createMany({
-    data: [{ course_id: course4.id, tag_id: tagCouple.id }],
-    skipDuplicates: true,
-  });
-
-  // Course 5: 부산 맛집 탐방 (혼자)
-  const course5 = await prisma.course.upsert({
-    where: { id: 5 },
-    update: {},
-    create: {
-      id: 5,
-      title: "부산 해안 맛집 혼자 여행",
-      description: "광안리 어묵·분식 골목에서 혼자만의 부산 맛집 탐방 후 해운대에서 마무리",
-      region_id: haeundae.id,
-      theme_id: themeFood.id,
-      estimated_minutes: 150,
-      created_by: userA.id,
-    },
-  });
-
-  await prisma.coursPlace.createMany({
-    data: [
-      { course_id: course5.id, place_id: places["광안리 어묵·분식 골목"].id, order_index: 1, travel_minutes_to_next: 20 },
-      { course_id: course5.id, place_id: places["해운대 해수욕장"].id, order_index: 2, travel_minutes_to_next: null },
-    ],
-    skipDuplicates: true,
-  });
-
-  await prisma.courseTag.createMany({
-    data: [{ course_id: course5.id, tag_id: tagSolo.id }],
-    skipDuplicates: true,
-  });
-
-  console.log("✅ Course + CoursePlace + CourseTag 삽입 완료");
-  console.log("🎉 시드 데이터 삽입 완료!");
+  console.log("✅ 테스트 User 2명 삽입 완료");
+  console.log("🎉 시드 완료!");
 }
 
 main()
-  .catch((e) => {
-    console.error("❌ 시드 실패:", e);
-    process.exit(1);
-  })
-  .finally(async () => {
-    await prisma.$disconnect();
-  });
+  .catch((e) => { console.error("❌ 시드 실패:", e); process.exit(1); })
+  .finally(() => prisma.$disconnect());
