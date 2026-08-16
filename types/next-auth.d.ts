@@ -4,16 +4,14 @@ import "next-auth/jwt";
 declare module "next-auth" {
   interface User {
     id: string;
-    lifeStage?: string | null;
-    familyType?: string | null;
+    lifeStageTags: string[]; // 한국어 표시명 배열
   }
   interface Session {
     user: {
       id: string;
       email: string;
       name: string;
-      lifeStage?: string | null;
-      familyType?: string | null;
+      lifeStageTags: string[];
     };
   }
 }
@@ -21,7 +19,6 @@ declare module "next-auth" {
 declare module "next-auth/jwt" {
   interface JWT {
     id: string;
-    lifeStage?: string | null;
-    familyType?: string | null;
+    lifeStageTags: string[];
   }
 }

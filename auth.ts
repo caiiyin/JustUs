@@ -2,6 +2,7 @@ import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import bcrypt from "bcrypt";
 import { prisma } from "@/lib/prisma";
+import { serializeLifeStageTags } from "@/lib/constants";
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   providers: [
@@ -13,21 +14,19 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       async authorize(credentials) {
         const email = credentials?.email as string | undefined;
         const password = credentials?.password as string | undefined;
-
         if (!email || !password) return null;
 
         const user = await prisma.user.findUnique({ where: { email } });
         if (!user) return null;
 
-        const isValid = await bcrypt.compare(password, user.password_hash);
+        const isValid = await bcrypt.compare(password, user.passwordHash);
         if (!isValid) return null;
 
         return {
           id: String(user.id),
           email: user.email,
           name: user.name,
-          lifeStage: user.life_stage,
-          familyType: user.family_type,
+          lifeStageTags: serializeLifeStageTags(user.lifeStageTags),
         };
       },
     }),
@@ -37,15 +36,13 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     jwt({ token, user }) {
       if (user) {
         token.id = user.id;
-        token.lifeStage = user.lifeStage;
-        token.familyType = user.familyType;
+        token.lifeStageTags = user.lifeStageTags;
       }
       return token;
     },
     session({ session, token }) {
       session.user.id = token.id;
-      session.user.lifeStage = token.lifeStage;
-      session.user.familyType = token.familyType;
+      session.user.lifeStageTags = token.lifeStageTags;
       return session;
     },
   },
