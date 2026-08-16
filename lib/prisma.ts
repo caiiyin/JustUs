@@ -2,7 +2,9 @@ import { PrismaClient } from "@/app/generated/prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
 
 function createPrismaClient() {
-  const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL! });
+  const url = process.env.DATABASE_URL!;
+  const ssl = url.includes("supabase.com") ? { rejectUnauthorized: false } : false;
+  const adapter = new PrismaPg({ connectionString: url, ssl: ssl || undefined });
   return new PrismaClient({ adapter });
 }
 
