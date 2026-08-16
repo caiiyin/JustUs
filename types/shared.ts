@@ -1,20 +1,31 @@
-/** GET /api/courses 응답 아이템 */
-export type CourseListItem = {
+// 백엔드 API 응답 타입 (실제 DB 스키마 기반)
+
+export type LifecycleTag =
+  | "영유아 동반"
+  | "어린이 동반"
+  | "청소년"
+  | "청년·1인"
+  | "커플·신혼"
+  | "중장년"
+  | "시니어"
+  | "반려동물 동반";
+
+export interface CourseListItem {
   id: number;
   title: string;
   description: string | null;
   region: string;
   theme: string;
-  lifeCycleTags: string[];    // 한국어 표시명
+  lifeCycleTags: LifecycleTag[];
   duration: string;
-  createdAt: Date;
+  estimatedTime: number;
   placeCount: number;
   reviewCount: number;
+  favoriteCount: number;
   avgRating: number | null;
-};
+}
 
-/** GET /api/courses/:id 포함 장소 */
-export type CoursePlaceItem = {
+export interface CoursePlaceItem {
   order: number;
   place: {
     id: number;
@@ -28,29 +39,48 @@ export type CoursePlaceItem = {
     image: string | null;
     tags: string[];
   };
-};
+}
 
-/** GET /api/courses/:id 응답 */
-export type CourseDetail = CourseListItem & {
+export interface CourseDetail {
+  id: number;
+  title: string;
+  description: string | null;
+  region: string;
+  theme: string;
+  lifeCycleTags: LifecycleTag[];
+  duration: string;
+  estimatedTime: number;
+  createdAt: string;
   places: CoursePlaceItem[];
+  reviewCount: number;
+  avgRating: number | null;
   isFavorited: boolean;
-};
+}
 
-/** POST /api/reviews 응답 */
-export type ReviewResponse = {
+export interface UserMe {
   id: number;
-  userId: number;
+  name: string;
+  email: string;
+  lifeStageTags: LifecycleTag[];
+  createdAt: string;
+}
+
+export interface FavoriteItem {
+  id: number;
   courseId: number;
-  rating: number;
-  content: string;
-  createdAt: Date;
-};
+  course: CourseListItem;
+}
 
-/** GET /api/courses/:id/reviews 응답 아이템 */
-export type ReviewItem = {
+export interface Notice {
   id: number;
-  rating: number;
+  title: string;
   content: string;
-  createdAt: Date;
-  user: { id: number; name: string };
-};
+  createdAt: string;
+}
+
+export interface CoursesResponse {
+  courses: CourseListItem[];
+  total: number;
+  page: number;
+  totalPages: number;
+}

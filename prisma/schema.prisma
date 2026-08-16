@@ -7,19 +7,6 @@ datasource db {
   provider = "postgresql"
 }
 
-// 생애주기 태그 고정값 (8개)
-// API 입출력은 한국어 표시명 사용, DB 저장값은 이 enum 코드명
-enum LifeStageTag {
-  INFANT_FAMILY   // 영유아 동반
-  CHILDREN_FAMILY // 어린이 동반
-  TEEN            // 청소년
-  YOUNG_SOLO      // 청년·1인
-  COUPLE_NEWLYWED // 커플·신혼
-  MIDDLE_AGED     // 중장년
-  SENIOR          // 시니어
-  PET_FAMILY      // 반려동물 동반
-}
-
 model User {
   id            Int            @id @default(autoincrement())
   email         String         @unique
@@ -27,9 +14,8 @@ model User {
   name          String
   lifeStageTags LifeStageTag[]
   createdAt     DateTime       @default(now())
-
-  reviews   Review[]
-  favorites Favorite[]
+  favorites     Favorite[]
+  reviews       Review[]
 
   @@map("users")
 }
@@ -46,7 +32,6 @@ model Place {
   image       String?
   tags        String[]
   createdAt   DateTime     @default(now())
-
   courseItems CourseItem[]
 
   @@map("places")
@@ -62,10 +47,9 @@ model Course {
   duration      String
   estimatedTime Int
   createdAt     DateTime       @default(now())
-
-  courseItems CourseItem[]
-  reviews     Review[]
-  favorites   Favorite[]
+  courseItems   CourseItem[]
+  favorites     Favorite[]
+  reviews       Review[]
 
   @@map("courses")
 }
@@ -80,13 +64,12 @@ model Notice {
 }
 
 model CourseItem {
-  id       Int @id @default(autoincrement())
+  id       Int    @id @default(autoincrement())
   courseId Int
   placeId  Int
   order    Int
-
-  course Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
-  place  Place  @relation(fields: [placeId], references: [id])
+  course   Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  place    Place  @relation(fields: [placeId], references: [id])
 
   @@unique([courseId, order])
   @@map("course_items")
@@ -99,9 +82,8 @@ model Review {
   rating    Int
   content   String
   createdAt DateTime @default(now())
-
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-  course Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  course    Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("reviews")
 }
@@ -111,10 +93,20 @@ model Favorite {
   userId    Int
   courseId  Int
   createdAt DateTime @default(now())
-
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-  course Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  course    Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, courseId])
   @@map("favorites")
+}
+
+enum LifeStageTag {
+  INFANT_FAMILY
+  CHILDREN_FAMILY
+  TEEN
+  YOUNG_SOLO
+  COUPLE_NEWLYWED
+  MIDDLE_AGED
+  SENIOR
+  PET_FAMILY
 }

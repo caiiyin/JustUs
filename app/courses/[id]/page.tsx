@@ -1,5 +1,10 @@
 import { notFound } from "next/navigation";
+import { MapPin, Clock, Star, ArrowLeft } from "lucide-react";
+import Link from "next/link";
 import CourseMap, { type CoursePlace } from "@/components/CourseMap";
+import LifecycleBadge from "@/components/ui/LifecycleBadge";
+import FavoriteButton from "@/components/course/FavoriteButton";
+import { getSession } from "@/lib/session";
 
 interface PlaceDetail {
   id: number;
@@ -45,7 +50,7 @@ export default async function CourseDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const data = await getCourse(id);
+  const [data, session] = await Promise.all([getCourse(id), getSession()]);
   if (!data) notFound();
 
   const { course } = data;
@@ -57,52 +62,88 @@ export default async function CourseDetailPage({
     lng: place.lng,
   }));
 
+  const hours = Math.floor(course.estimatedTime / 60);
+  const mins = course.estimatedTime % 60;
+  const timeStr = hours > 0 ? `${hours}시간${mins > 0 ? ` ${mins}분` : ""}` : `${mins}분`;
+
   return (
-    <main className="min-h-screen bg-gray-50">
-      <div className="max-w-3xl mx-auto px-4 py-8 space-y-6">
-        {/* 헤더 */}
-        <section>
-          <div className="flex flex-wrap gap-2 mb-2">
-            {course.lifeCycleTags.map((tag) => (
-              <span
-                key={tag}
-                className="px-2 py-0.5 bg-blue-100 text-blue-700 text-xs font-medium rounded-full"
-              >
-                {tag}
-              </span>
-            ))}
-          </div>
-          <h1 className="text-2xl font-bold text-gray-900 leading-tight">{course.title}</h1>
-          <p className="mt-1 text-sm text-gray-500">
-            {course.region} · {course.duration}
-            {" "}({Math.floor(course.estimatedTime / 60)}시간{course.estimatedTime % 60 > 0 ? ` ${course.estimatedTime % 60}분` : ""})
+    <div className="max-w-md mx-auto min-h-screen bg-white pb-8 lg:max-w-5xl">
+      {/* 헤더 */}
+      <header className="flex items-center justify-between px-4 h-14 bg-white border-b border-gray-100 sticky top-0 lg:top-16 z-40">
+        <Link href="/courses" className="p-1 -ml-1 text-gray-700">
+          <ArrowLeft size={24} />
+        </Link>
+        <h1 className="absolute left-1/2 -translate-x-1/2 text-base font-semibold text-gray-900 truncate max-w-[60%]">
+          {course.title}
+        </h1>
+        <FavoriteButton
+          courseId={course.id}
+          initialFavorited={course.isFavorited}
+          isLoggedIn={!!session}
+        />
+      </header>
+
+      {/* 테마 배너 (이미지 대체) */}
+      <div className="relative h-48 lg:h-72 bg-gradient-to-br from-blue-400 to-indigo-600 flex items-end px-5 pb-4">
+        <div className="flex flex-wrap gap-1.5">
+          {course.lifeCycleTags.map((tag) => (
+            <LifecycleBadge key={tag} tag={tag} size="md" />
+          ))}
+          <span className="px-3 py-1 text-xs font-medium bg-white/20 text-white rounded-full">
+            {course.theme}
+          </span>
+        </div>
+      </div>
+
+      <div className="px-4 py-5 space-y-5 lg:px-8">
+        {/* 코스명 + 기본 정보 */}
+        <div>
+          <h2 className="text-xl font-bold text-gray-900">{course.title}</h2>
+          <p className="flex items-center gap-1 mt-1 text-sm text-gray-500">
+            <MapPin size={14} />
+            {course.region}
           </p>
           {course.description && (
-            <p className="mt-3 text-gray-700 leading-relaxed">{course.description}</p>
+            <p className="mt-2 text-sm text-gray-600 leading-relaxed">{course.description}</p>
           )}
-        </section>
+        </div>
+
+        {/* 정보 요약 */}
+        <div className="flex gap-4 py-4 border-y border-gray-100">
+          <div className="flex items-center gap-1.5 text-sm text-gray-700">
+            <Star size={16} className="fill-amber-400 stroke-amber-400" />
+            <span className="font-semibold">
+              {course.avgRating ? course.avgRating.toFixed(1) : "—"}
+            </span>
+            <span className="text-gray-400">({course.reviewCount})</span>
+          </div>
+          <div className="flex items-center gap-1.5 text-sm text-gray-700">
+            <Clock size={16} className="text-gray-400" />
+            <span>{timeStr}</span>
+          </div>
+        </div>
 
         {/* 카카오맵 */}
         <section>
-          <h2 className="text-lg font-semibold text-gray-800 mb-3">이동 동선</h2>
+          <h3 className="text-base font-semibold text-gray-800 mb-3">이동 동선</h3>
           <CourseMap places={mapPlaces} />
         </section>
 
         {/* 장소 목록 */}
         <section>
-          <h2 className="text-lg font-semibold text-gray-800 mb-3">포함 장소</h2>
+          <h3 className="text-base font-semibold text-gray-800 mb-3">포함 장소</h3>
           <ol className="space-y-3">
             {course.places
               .slice()
               .sort((a, b) => a.order - b.order)
               .map(({ order, place }) => (
-                <li key={place.id} className="flex gap-4 bg-white rounded-xl p-4 shadow-sm">
-                  <div className="flex-shrink-0 w-8 h-8 rounded-full bg-blue-500 text-white text-sm font-bold flex items-center justify-center">
+                <li key={place.id} className="flex gap-4 bg-gray-50 rounded-2xl p-4">
+                  <div className="flex-shrink-0 w-8 h-8 rounded-full bg-[#1D4994] text-white text-sm font-bold flex items-center justify-center">
                     {order}
                   </div>
-                  <div>
+                  <div className="flex-1 min-w-0">
                     <p className="font-semibold text-gray-900">{place.name}</p>
-                    <p className="text-sm text-gray-500">{place.address}</p>
+                    <p className="text-sm text-gray-500 truncate">{place.address}</p>
                     {place.hours && (
                       <p className="text-xs text-gray-400 mt-0.5">⏰ {place.hours}</p>
                     )}
@@ -112,7 +153,10 @@ export default async function CourseDetailPage({
                     {place.tags.length > 0 && (
                       <div className="mt-1 flex flex-wrap gap-1">
                         {place.tags.map((t) => (
-                          <span key={t} className="px-1.5 py-0.5 bg-gray-100 text-gray-500 text-xs rounded">
+                          <span
+                            key={t}
+                            className="px-1.5 py-0.5 bg-white text-gray-500 text-xs rounded border"
+                          >
                             {t}
                           </span>
                         ))}
@@ -123,22 +167,7 @@ export default async function CourseDetailPage({
               ))}
           </ol>
         </section>
-
-        {/* 리뷰 요약 */}
-        <section className="bg-white rounded-xl p-4 shadow-sm flex items-center gap-4">
-          <div className="text-center">
-            <p className="text-3xl font-bold text-yellow-500">
-              {course.avgRating ? course.avgRating.toFixed(1) : "—"}
-            </p>
-            <p className="text-xs text-gray-400">평균 평점</p>
-          </div>
-          <div className="w-px h-10 bg-gray-200" />
-          <div>
-            <p className="font-semibold text-gray-700">{course.reviewCount}개의 리뷰</p>
-            <p className="text-sm text-gray-400">로그인 후 리뷰를 남겨보세요</p>
-          </div>
-        </section>
       </div>
-    </main>
+    </div>
   );
 }

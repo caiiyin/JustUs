@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { serializeLifeStageTags } from "@/lib/constants";
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
+  basePath: `${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/api/auth`,
   providers: [
     Credentials({
       credentials: {
