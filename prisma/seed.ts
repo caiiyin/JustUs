@@ -1,10 +1,9 @@
 import bcrypt from "bcrypt";
+import { PrismaClient } from "../app/generated/prisma/client";
+import { PrismaPg } from "@prisma/adapter-pg";
 
-// Prisma 7 — import from generated output path
-// @ts-ignore path resolved after first `prisma generate`
-import { PrismaClient } from "../app/generated/prisma";
-
-const prisma = new PrismaClient();
+const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL! });
+const prisma = new PrismaClient({ adapter });
 
 async function main() {
   console.log("🌱 시드 데이터 삽입 시작...");
