@@ -1,6 +1,5 @@
 # API 명세서 — 생애주기별 여가 나들이 코스 추천 플랫폼
 
-> P0 우선순위 기준 (요구사항 명세서 §7 QA 기준 검증 포함)  
 > 모든 응답의 Content-Type은 `application/json`.  
 > 에러 응답 형식은 `{ "error": "<message>" }` 로 통일.
 
@@ -19,11 +18,11 @@
 
 ## 1. 인증 (AUTH)
 
-### POST /api/auth/signup
+### POST /api/auth/register
 
 | 항목 | 내용 |
 |------|------|
-| 설명 | 회원가입 |
+| 설명 | 회원가입 (`/api/auth/signup` → 변경) |
 | 인증 필요 | ✗ |
 
 **Request Body**
@@ -110,21 +109,19 @@
 
 | 항목 | 내용 |
 |------|------|
-| 설명 | 코스 목록 조회 (필터 지원) |
+| 설명 | 코스 목록 조회 (필터 · 정렬 · 페이징) |
 | 인증 필요 | ✗ |
 
 **Query Parameters**
 
-| 파라미터 | 타입 | 설명 |
-|---------|------|------|
-| lifeStage | string | 생애주기 태그 (한국어 표시명) |
-| region | string | 지역 (부분 일치) |
-| theme | string | 테마 (부분 일치) |
-
-**Request**
-```
-GET /api/courses?lifeStage=커플·신혼&region=화성
-```
+| 파라미터 | 타입 | 기본값 | 설명 |
+|---------|------|--------|------|
+| lifeStage | string | — | 생애주기 태그 (한국어 표시명) |
+| region | string | — | 지역 (부분 일치) |
+| theme | string | — | 테마 (부분 일치) |
+| sort | string | `latest` | `latest` / `popular` (즐겨찾기 수) / `rating` (평균 평점) |
+| page | number | `1` | 페이지 번호 |
+| limit | number | `10` | 페이지당 항목 수 (최대 50) |
 
 **Response 200**
 ```json
@@ -138,13 +135,17 @@ GET /api/courses?lifeStage=커플·신혼&region=화성
       "theme": "역사, 자연, 미식",
       "lifeCycleTags": ["커플·신혼", "중장년", "청년·1인"],
       "duration": "당일 (약 6시간)",
+      "estimatedTime": 360,
       "createdAt": "2025-01-01T00:00:00.000Z",
       "placeCount": 3,
       "reviewCount": 2,
+      "favoriteCount": 5,
       "avgRating": 4.5
     }
   ],
-  "total": 1
+  "total": 8,
+  "page": 1,
+  "totalPages": 1
 }
 ```
 
@@ -155,7 +156,7 @@ GET /api/courses?lifeStage=커플·신혼&region=화성
 | 항목 | 내용 |
 |------|------|
 | 설명 | 코스 상세 조회 (포함 장소 순서 포함) |
-| 인증 필요 | ✗ |
+| 인증 필요 | ✗ (로그인 시 isFavorited 반영) |
 
 **Response 200**
 ```json
@@ -168,6 +169,7 @@ GET /api/courses?lifeStage=커플·신혼&region=화성
     "theme": "역사, 자연, 미식",
     "lifeCycleTags": ["커플·신혼", "중장년", "청년·1인"],
     "duration": "당일 (약 6시간)",
+    "estimatedTime": 360,
     "createdAt": "2025-01-01T00:00:00.000Z",
     "places": [
       {
@@ -201,14 +203,78 @@ GET /api/courses?lifeStage=커플·신혼&region=화성
 
 ---
 
+### GET /api/courses/:id/reviews
+
+| 항목 | 내용 |
+|------|------|
+| 설명 | 코스 리뷰 목록 조회 (평균 평점 포함) |
+| 인증 필요 | ✗ |
+
+**Response 200**
+```json
+{
+  "reviews": [
+    {
+      "id": 1,
+      "rating": 5,
+      "content": "정말 좋은 코스입니다!",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "user": { "id": 1, "name": "홍길동" }
+    }
+  ],
+  "avgRating": 4.5,
+  "total": 2
+}
+```
+
+---
+
 ## 3. 즐겨찾기 (FAVORITE)
 
-### POST /api/courses/:id/favorite
+> 기존 `POST/DELETE /api/courses/:id/favorite` + `GET /api/me/favorites`를 단일 리소스로 통합
+
+### GET /api/favorites
+
+| 항목 | 내용 |
+|------|------|
+| 설명 | 내 즐겨찾기 코스 목록 |
+| 인증 필요 | ✓ |
+
+**Response 200**
+```json
+{
+  "favorites": [
+    {
+      "id": 1,
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "course": {
+        "id": 1,
+        "title": "화성 올인원 패키지 — 역사와 바다, 오감 여행",
+        "region": "화성시 전역",
+        "theme": "역사, 자연, 미식",
+        "lifeCycleTags": ["커플·신혼"],
+        "duration": "당일 (약 6시간)",
+        "estimatedTime": 360
+      }
+    }
+  ],
+  "total": 1
+}
+```
+
+---
+
+### POST /api/favorites
 
 | 항목 | 내용 |
 |------|------|
 | 설명 | 즐겨찾기 추가 |
 | 인증 필요 | ✓ |
+
+**Request Body**
+```json
+{ "courseId": 1 }
+```
 
 **Response 201**
 ```json
@@ -225,12 +291,14 @@ GET /api/courses?lifeStage=커플·신혼&region=화성
 
 ---
 
-### DELETE /api/courses/:id/favorite
+### DELETE /api/favorites
 
 | 항목 | 내용 |
 |------|------|
 | 설명 | 즐겨찾기 삭제 |
 | 인증 필요 | ✓ |
+
+`courseId`는 쿼리스트링(`?courseId=1`) 또는 Request Body(`{"courseId":1}`) 둘 다 허용.
 
 **Response 200**
 ```json
@@ -294,39 +362,13 @@ GET /api/courses?lifeStage=커플·신혼&region=화성
 
 ---
 
-### GET /api/courses/:id/reviews
+## 5. 마이페이지 (USERS/ME)
+
+### GET /api/users/me
 
 | 항목 | 내용 |
 |------|------|
-| 설명 | 코스 리뷰 목록 조회 (평균 평점 포함) |
-| 인증 필요 | ✗ |
-
-**Response 200**
-```json
-{
-  "reviews": [
-    {
-      "id": 1,
-      "rating": 5,
-      "content": "정말 좋은 코스입니다!",
-      "createdAt": "2025-01-01T00:00:00.000Z",
-      "user": { "id": 1, "name": "홍길동" }
-    }
-  ],
-  "avgRating": 4.5,
-  "total": 2
-}
-```
-
----
-
-## 5. 마이페이지 (MY)
-
-### GET /api/me
-
-| 항목 | 내용 |
-|------|------|
-| 설명 | 내 프로필 조회 |
+| 설명 | 내 프로필 조회 (`/api/me` → 변경) |
 | 인증 필요 | ✓ |
 
 **Response 200**
@@ -344,11 +386,11 @@ GET /api/courses?lifeStage=커플·신혼&region=화성
 
 ---
 
-### PATCH /api/me
+### PATCH /api/users/me
 
 | 항목 | 내용 |
 |------|------|
-| 설명 | 내 프로필 수정 (name, lifeStageTags 변경 가능) |
+| 설명 | 내 프로필 수정 (`/api/me` → 변경) |
 | 인증 필요 | ✓ |
 
 **Request Body** (변경할 필드만 포함)
@@ -381,28 +423,23 @@ GET /api/courses?lifeStage=커플·신혼&region=화성
 
 ---
 
-### GET /api/me/favorites
+### GET /api/users/me/reviews
 
 | 항목 | 내용 |
 |------|------|
-| 설명 | 내 즐겨찾기 코스 목록 |
+| 설명 | 내가 작성한 리뷰 목록 |
 | 인증 필요 | ✓ |
 
 **Response 200**
 ```json
 {
-  "favorites": [
+  "reviews": [
     {
       "id": 1,
+      "rating": 5,
+      "content": "정말 좋은 코스입니다!",
       "createdAt": "2025-01-01T00:00:00.000Z",
-      "course": {
-        "id": 1,
-        "title": "화성 올인원 패키지 — 역사와 바다, 오감 여행",
-        "region": "화성시 전역",
-        "theme": "역사, 자연, 미식",
-        "lifeCycleTags": ["커플·신혼"],
-        "duration": "당일 (약 6시간)"
-      }
+      "course": { "id": 1, "title": "화성 올인원 패키지 — ...", "region": "화성시 전역" }
     }
   ],
   "total": 1
@@ -411,12 +448,56 @@ GET /api/courses?lifeStage=커플·신혼&region=화성
 
 ---
 
-## QA 시나리오 (§7 기준)
+## 6. 공지사항 (NOTICE)
+
+### GET /api/notices
+
+| 항목 | 내용 |
+|------|------|
+| 설명 | 공지사항 목록 (최신순) |
+| 인증 필요 | ✗ |
+
+**Response 200**
+```json
+{
+  "notices": [
+    {
+      "id": 1,
+      "title": "서비스 오픈 안내",
+      "content": "생애주기별 여가 나들이 코스 추천 플랫폼...",
+      "createdAt": "2025-01-01T00:00:00.000Z"
+    }
+  ],
+  "total": 3
+}
+```
+
+---
+
+## QA 시나리오 (갱신)
 
 | # | 시나리오 | 엔드포인트 | 예상 결과 |
 |---|---------|-----------|---------|
-| QA-1 | 중복 이메일 가입 시도 | POST /api/auth/signup | 409 + `이미 사용 중인 이메일입니다.` |
-| QA-2 | 생애주기+지역 필터링 | GET /api/courses?lifeStage=커플·신혼&region=화성 | 해당 태그·지역 코스만 반환 |
-| QA-3 | 비로그인 즐겨찾기 요청 | POST /api/courses/1/favorite | 401 + `인증되지 않은 요청입니다.` |
-| QA-4 | 별점 없이 리뷰 제출 | POST /api/reviews (rating 없음) | 400 + `rating은 1~5 정수로 입력해주세요.` |
-| QA-5 | 3곳 포함 코스 순서 확인 | GET /api/courses/4 | places 배열 order 1→2→3 순 |
+| QA-1 | 신규 회원가입 | POST /api/auth/register | 201 + user + token |
+| QA-2 | 중복 이메일 가입 | POST /api/auth/register | 409 + `이미 사용 중인 이메일입니다.` |
+| QA-3 | 생애주기+지역 필터링 | GET /api/courses?lifeStage=커플·신혼&region=화성 | 해당 태그·지역 코스만 반환 |
+| QA-4 | 비로그인 즐겨찾기 요청 | POST /api/favorites | 401 + `인증되지 않은 요청입니다.` |
+| QA-5 | 별점 없이 리뷰 제출 | POST /api/reviews (rating 없음) | 400 + `rating은 1~5 정수로 입력해주세요.` |
+| QA-6 | 3곳 포함 코스 순서 확인 | GET /api/courses/4 | places 배열 order 1→2→3 순 |
+| QA-7 | 인기순 페이징 | GET /api/courses?sort=popular&page=1&limit=3 | total, page, totalPages 포함 |
+| QA-8 | 내 리뷰 목록 | GET /api/users/me/reviews | reviews 배열 + total |
+| QA-9 | 공지사항 목록 | GET /api/notices | 3개 공지 반환 |
+
+---
+
+## 변경 이력
+
+| 버전 | 변경 내용 |
+|------|---------|
+| v2 | `/api/auth/signup` → `/api/auth/register` 경로 변경 |
+| v2 | `/api/me`, `/api/me/favorites` → `/api/users/me`, `/api/favorites` 통합 |
+| v2 | `Course.estimatedTime` 필드 추가 (분 단위 정수) |
+| v2 | `/api/courses` 정렬(`sort`) · 페이징(`page`, `limit`, `totalPages`) 추가 |
+| v2 | `/api/users/me/reviews` 신규 |
+| v2 | `/api/notices` 신규 (Notice 모델) |
+| v2 | `GET /api/courses` 응답에 `favoriteCount`, `estimatedTime` 추가 |

@@ -8,6 +8,10 @@ const prisma = new PrismaClient({ adapter });
 async function main() {
   console.log("🌱 시드 데이터 삽입 시작 (CONTENT.md 기준)...");
 
+  // 모든 테이블 초기화 (시퀀스도 리셋)
+  await prisma.$executeRaw`TRUNCATE TABLE notices, reviews, favorites, course_items, courses, places, users RESTART IDENTITY CASCADE`;
+  console.log("🗑️ 기존 데이터 초기화 완료");
+
   // ─────────────────────────────────────────────────────
   // 1. Places  P01~P20  (화성시 관광지)
   // ─────────────────────────────────────────────────────
@@ -214,19 +218,12 @@ async function main() {
     },
   ];
 
-  const places: number[] = [];
-  for (const data of placesData) {
-    const p = await prisma.place.upsert({
-      where: { id: places.length + 1 },
-      update: {},
-      create: { ...data, id: places.length + 1 },
-    });
-    places.push(p.id);
-  }
-  console.log(`✅ Place ${places.length}개 삽입 완료`);
+  await prisma.place.createMany({ data: placesData });
+  const createdPlaces = await prisma.place.findMany({ orderBy: { id: "asc" }, select: { id: true } });
+  console.log(`✅ Place ${createdPlaces.length}개 삽입 완료`);
 
   // Place ID 헬퍼: P(n) → 실제 DB id (1-indexed)
-  const P = (n: number) => places[n - 1];
+  const P = (n: number) => createdPlaces[n - 1].id;
 
   // ─────────────────────────────────────────────────────
   // 2. Courses  C01~C08
@@ -239,6 +236,7 @@ async function main() {
     theme: string;
     lifeCycleTags: LifeStageTag[];
     duration: string;
+    estimatedTime: number;
     placeIds: number[];
   }[] = [
     {
@@ -254,6 +252,7 @@ async function main() {
         LifeStageTag.YOUNG_SOLO,
       ],
       duration: "당일 (약 6시간)",
+      estimatedTime: 360,
       placeIds: [P(2), P(4), P(5)],
     },
     {
@@ -269,6 +268,7 @@ async function main() {
         LifeStageTag.SENIOR,
       ],
       duration: "1박 2일",
+      estimatedTime: 1440,
       placeIds: [P(11), P(10), P(16)],
     },
     {
@@ -283,6 +283,7 @@ async function main() {
         LifeStageTag.COUPLE_NEWLYWED,
       ],
       duration: "당일 (약 7시간)",
+      estimatedTime: 420,
       placeIds: [P(13), P(12), P(5), P(6)],
     },
     {
@@ -298,6 +299,7 @@ async function main() {
         LifeStageTag.YOUNG_SOLO,
       ],
       duration: "당일 (약 6시간)",
+      estimatedTime: 360,
       placeIds: [P(6), P(7), P(8)],
     },
     {
@@ -313,6 +315,7 @@ async function main() {
         LifeStageTag.COUPLE_NEWLYWED,
       ],
       duration: "1박 2일",
+      estimatedTime: 1440,
       placeIds: [P(17), P(11), P(10)],
     },
     {
@@ -328,6 +331,7 @@ async function main() {
         LifeStageTag.MIDDLE_AGED,
       ],
       duration: "당일 (약 7시간)",
+      estimatedTime: 420,
       placeIds: [P(15), P(4), P(14)],
     },
     {
@@ -343,6 +347,7 @@ async function main() {
         LifeStageTag.SENIOR,
       ],
       duration: "1박 2일",
+      estimatedTime: 1440,
       placeIds: [P(18), P(12), P(16)],
     },
     {
@@ -358,24 +363,19 @@ async function main() {
         LifeStageTag.CHILDREN_FAMILY,
       ],
       duration: "당일 (약 7시간)",
+      estimatedTime: 420,
       placeIds: [P(13), P(2), P(5), P(4)],
     },
   ];
 
-  for (const { placeIds, ...courseData } of coursesData) {
-    const course = await prisma.course.upsert({
-      where: { id: courseData.id },
-      update: {},
-      create: courseData,
-    });
-
+  for (const { id: _id, placeIds, ...courseData } of coursesData) {
+    const course = await prisma.course.create({ data: courseData });
     await prisma.courseItem.createMany({
       data: placeIds.map((placeId, i) => ({
         courseId: course.id,
         placeId,
         order: i + 1,
       })),
-      skipDuplicates: true,
     });
   }
   console.log(`✅ Course ${coursesData.length}개 + CourseItem 삽입 완료`);
@@ -407,6 +407,34 @@ async function main() {
     }),
   ]);
   console.log("✅ 테스트 User 2명 삽입 완료");
+
+  // ─────────────────────────────────────────────────────
+  // 4. Notices
+  // ─────────────────────────────────────────────────────
+  const noticesData = [
+    {
+      title: "서비스 오픈 안내",
+      content:
+        "생애주기별 여가 나들이 코스 추천 플랫폼 '나들이코스'가 정식 오픈되었습니다. " +
+        "화성시 대표 관광지를 생애주기별로 큐레이션한 8개 코스를 지금 바로 만나보세요.",
+    },
+    {
+      title: "신규 코스 추가 안내",
+      content:
+        "펫프렌들리 코스와 무장애 힐링 코스가 새롭게 추가되었습니다. " +
+        "반려동물 동반 가능 시설과 휠체어 접근 가능 동선을 꼼꼼히 확인하여 구성하였습니다.",
+    },
+    {
+      title: "카카오맵 연동 기능 안내",
+      content:
+        "코스 상세 페이지에서 장소별 위치와 이동 동선을 카카오맵으로 확인할 수 있습니다. " +
+        "마커를 클릭하면 장소 정보가 표시됩니다.",
+    },
+  ];
+  for (const notice of noticesData) {
+    await prisma.notice.create({ data: notice });
+  }
+  console.log(`✅ Notice ${noticesData.length}개 삽입 완료`);
   console.log("🎉 시드 완료!");
 }
 

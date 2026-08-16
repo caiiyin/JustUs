@@ -60,6 +60,7 @@ model Course {
   theme         String
   lifeCycleTags LifeStageTag[]
   duration      String
+  estimatedTime Int
   createdAt     DateTime       @default(now())
 
   courseItems CourseItem[]
@@ -67,6 +68,15 @@ model Course {
   favorites   Favorite[]
 
   @@map("courses")
+}
+
+model Notice {
+  id        Int      @id @default(autoincrement())
+  title     String
+  content   String
+  createdAt DateTime @default(now())
+
+  @@map("notices")
 }
 
 model CourseItem {

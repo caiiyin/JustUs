@@ -47,6 +47,7 @@ export async function GET(
       theme: course.theme,
       lifeCycleTags: serializeLifeStageTags(course.lifeCycleTags),
       duration: course.duration,
+      estimatedTime: course.estimatedTime,
       createdAt: course.createdAt,
       places: course.courseItems.map((ci) => ({
         order: ci.order,
