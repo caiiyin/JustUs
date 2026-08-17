@@ -4,11 +4,11 @@ import { useState, useEffect, useCallback } from "react";
 import BackHeader from "@/components/layout/BackHeader";
 import CourseCard from "@/components/course/CourseCard";
 import BottomNav from "@/components/layout/BottomNav";
-import { CourseListItem, CoursesResponse, LifecycleTag } from "@/types/shared";
+import { CourseListItem, CoursesResponse } from "@/types/shared";
 
 const BASE_PATH = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
 
-const LIFECYCLE_FILTERS: { value: string; label: string }[] = [
+const LIFECYCLE_FILTERS = [
   { value: "", label: "전체" },
   { value: "영유아 동반", label: "영유아" },
   { value: "어린이 동반", label: "어린이" },
@@ -39,7 +39,6 @@ export default function CoursesPage() {
     setLoading(true);
     const params = new URLSearchParams({ sort, page: String(p), limit: "9" });
     if (lifeStage) params.set("lifeStage", lifeStage);
-
     try {
       const res = await fetch(`${BASE_PATH}/api/courses?${params}`);
       if (!res.ok) return;
@@ -57,43 +56,68 @@ export default function CoursesPage() {
     fetchCourses(activeFilter, activeSort, 1);
   }, [activeFilter, activeSort, fetchCourses]);
 
-  function handleFilterChange(value: string) {
-    setActiveFilter(value);
-  }
-
-  function handleSortChange(value: string) {
-    setActiveSort(value);
-  }
-
   return (
-    <div className="max-w-md mx-auto min-h-screen bg-gray-50 pb-24 lg:max-w-7xl lg:pb-8">
-      <BackHeader title="코스 목록" />
+    <div className="min-h-screen bg-gray-50 pb-24 lg:pb-8">
 
-      {/* 필터 탭 */}
-      <div className="flex gap-2 overflow-x-auto no-scrollbar px-4 py-3 bg-white border-b border-gray-100 lg:flex-wrap lg:overflow-visible lg:sticky lg:top-16 lg:z-30">
-        {LIFECYCLE_FILTERS.map((filter) => (
-          <button
-            key={filter.value}
-            onClick={() => handleFilterChange(filter.value)}
-            className={`flex-shrink-0 px-4 py-1.5 rounded-full text-sm font-medium transition-all ${
-              activeFilter === filter.value
-                ? "bg-[#1D4994] text-white"
-                : "bg-[#EAF2FB] text-[#14356C]"
-            }`}
-          >
-            {filter.label}
-          </button>
-        ))}
+      {/* ── 모바일 헤더 ── */}
+      <div className="lg:hidden">
+        <BackHeader title="코스 목록" />
       </div>
 
-      {/* 정렬 + 총 개수 */}
-      <div className="flex items-center justify-between px-4 py-2 bg-white border-b border-gray-50">
+      {/* ── PC 헤더: 타이틀 + 정렬 ── */}
+      <div className="hidden lg:block bg-white border-b border-gray-100 sticky top-16 z-30">
+        <div className="max-w-7xl mx-auto px-8 py-5 flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">코스 목록</h1>
+            <p className="text-sm text-gray-400 mt-0.5">총 {total}개 코스</p>
+          </div>
+          <div className="flex gap-1">
+            {SORTS.map((s) => (
+              <button
+                key={s.value}
+                onClick={() => setActiveSort(s.value)}
+                className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${
+                  activeSort === s.value
+                    ? "bg-[#1D4994] text-white"
+                    : "text-gray-500 hover:bg-gray-100"
+                }`}
+              >
+                {s.label}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* ── 필터 탭 ── */}
+      <div className="bg-white border-b border-gray-100 lg:sticky lg:top-[121px] lg:z-20">
+        <div className="max-w-7xl mx-auto px-4 lg:px-8 py-3">
+          <div className="flex gap-2 overflow-x-auto no-scrollbar lg:overflow-visible lg:flex-wrap">
+            {LIFECYCLE_FILTERS.map((filter) => (
+              <button
+                key={filter.value}
+                onClick={() => setActiveFilter(filter.value)}
+                className={`flex-shrink-0 px-4 py-1.5 rounded-full text-sm font-medium transition-all ${
+                  activeFilter === filter.value
+                    ? "bg-[#1D4994] text-white"
+                    : "bg-[#EAF2FB] text-[#14356C] hover:bg-[#1D4994] hover:text-white"
+                }`}
+              >
+                {filter.label}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* ── 모바일 전용: 정렬 + 개수 ── */}
+      <div className="lg:hidden flex items-center justify-between px-4 py-2 bg-white border-b border-gray-50">
         <span className="text-xs text-gray-400">총 {total}개 코스</span>
         <div className="flex gap-1">
           {SORTS.map((s) => (
             <button
               key={s.value}
-              onClick={() => handleSortChange(s.value)}
+              onClick={() => setActiveSort(s.value)}
               className={`px-3 py-1 rounded text-xs transition-colors ${
                 activeSort === s.value
                   ? "text-[#1D4994] font-semibold"
@@ -106,22 +130,26 @@ export default function CoursesPage() {
         </div>
       </div>
 
-      {/* 코스 목록 */}
-      <div className="px-4 py-4 flex flex-col gap-4 lg:px-8 lg:grid lg:grid-cols-3 lg:gap-6">
-        {loading ? (
-          Array.from({ length: 6 }).map((_, i) => (
-            <div key={i} className="bg-white rounded-2xl h-48 animate-pulse" />
-          ))
-        ) : courses.length === 0 ? (
-          <div className="col-span-3 text-center py-20 text-gray-400">
-            해당하는 코스가 없습니다.
-          </div>
-        ) : (
-          courses.map((course) => <CourseCard key={course.id} course={course} />)
-        )}
+      {/* ── 코스 그리드 ── */}
+      <div className="max-w-7xl mx-auto px-4 py-4 lg:px-8 lg:py-6">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 lg:gap-6">
+          {loading
+            ? Array.from({ length: 8 }).map((_, i) => (
+                <div key={i} className="bg-white rounded-2xl h-52 animate-pulse" />
+              ))
+            : courses.length === 0
+            ? (
+              <div className="col-span-full text-center py-20 text-gray-400">
+                해당하는 코스가 없습니다.
+              </div>
+            )
+            : courses.map((course) => (
+                <CourseCard key={course.id} course={course} />
+              ))}
+        </div>
       </div>
 
-      {/* 페이지네이션 */}
+      {/* ── 페이지네이션 ── */}
       {totalPages > 1 && (
         <div className="flex justify-center items-center gap-4 py-6">
           <button
@@ -131,9 +159,7 @@ export default function CoursesPage() {
           >
             이전
           </button>
-          <span className="text-sm text-gray-500">
-            {page} / {totalPages}
-          </span>
+          <span className="text-sm text-gray-500">{page} / {totalPages}</span>
           <button
             onClick={() => fetchCourses(activeFilter, activeSort, page + 1)}
             disabled={page >= totalPages}

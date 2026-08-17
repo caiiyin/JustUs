@@ -8,46 +8,50 @@ import { serializeLifeStageTags } from "@/lib/constants";
 import { CourseListItem } from "@/types/shared";
 
 async function getUserFavorites(userId: number): Promise<CourseListItem[]> {
-  const favs = await prisma.favorite.findMany({
-    where: { userId },
-    include: {
-      course: {
-        include: {
-          _count: { select: { courseItems: true, reviews: true, favorites: true } },
-          reviews: { select: { rating: true } },
-          courseItems: {
-            take: 1,
-            orderBy: { order: "asc" as const },
-            include: { place: { select: { image: true } } },
+  try {
+    const favs = await prisma.favorite.findMany({
+      where: { userId },
+      include: {
+        course: {
+          include: {
+            _count: { select: { courseItems: true, reviews: true, favorites: true } },
+            reviews: { select: { rating: true } },
+            courseItems: {
+              take: 1,
+              orderBy: { order: "asc" as const },
+              include: { place: { select: { image: true } } },
+            },
           },
         },
       },
-    },
-    orderBy: { createdAt: "desc" },
-  });
+      orderBy: { createdAt: "desc" },
+    });
 
-  return favs.map(({ course: c }) => {
-    const ratings = c.reviews.map((r) => r.rating);
-    const avgRating =
-      ratings.length > 0
-        ? Math.round((ratings.reduce((a, b) => a + b, 0) / ratings.length) * 10) / 10
-        : null;
-    return {
-      id: c.id,
-      title: c.title,
-      description: c.description,
-      region: c.region,
-      theme: c.theme,
-      lifeCycleTags: serializeLifeStageTags(c.lifeCycleTags) as CourseListItem["lifeCycleTags"],
-      duration: c.duration,
-      estimatedTime: c.estimatedTime,
-      placeCount: c._count.courseItems,
-      reviewCount: c._count.reviews,
-      favoriteCount: c._count.favorites,
-      avgRating,
-      thumbnail: c.courseItems[0]?.place.image ?? null,
-    };
-  });
+    return favs.map(({ course: c }) => {
+      const ratings = c.reviews.map((r) => r.rating);
+      const avgRating =
+        ratings.length > 0
+          ? Math.round((ratings.reduce((a, b) => a + b, 0) / ratings.length) * 10) / 10
+          : null;
+      return {
+        id: c.id,
+        title: c.title,
+        description: c.description,
+        region: c.region,
+        theme: c.theme,
+        lifeCycleTags: serializeLifeStageTags(c.lifeCycleTags) as CourseListItem["lifeCycleTags"],
+        duration: c.duration,
+        estimatedTime: c.estimatedTime,
+        placeCount: c._count.courseItems,
+        reviewCount: c._count.reviews,
+        favoriteCount: c._count.favorites,
+        avgRating,
+        thumbnail: c.courseItems[0]?.place.image ?? null,
+      };
+    });
+  } catch {
+    return [];
+  }
 }
 
 export default async function FavoritesPage() {

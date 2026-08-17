@@ -4,30 +4,35 @@ import AllCoursesMap, { type MapCourse } from "@/components/AllCoursesMap";
 import BottomNav from "@/components/layout/BottomNav";
 
 async function getMapData(): Promise<MapCourse[]> {
-  const courses = await prisma.course.findMany({
-    include: {
-      courseItems: {
-        include: { place: true },
-        orderBy: { order: "asc" },
+  try {
+    const courses = await prisma.course.findMany({
+      include: {
+        courseItems: {
+          include: { place: true },
+          orderBy: { order: "asc" },
+        },
       },
-    },
-  });
+    });
 
-  const filtered = courses.filter((c) => c.courseItems.length > 0);
-  return filtered.map((c) => ({
-      id: c.id,
-      title: c.title,
-      theme: c.theme,
-      region: c.region,
-      lifeCycleTags: serializeLifeStageTags(c.lifeCycleTags),
-      places: c.courseItems.map(({ place }) => ({
-        id: place.id,
-        name: place.name,
-        lat: place.lat,
-        lng: place.lng,
-        address: place.address,
-      })),
-    }));
+    return courses
+      .filter((c) => c.courseItems.length > 0)
+      .map((c) => ({
+        id: c.id,
+        title: c.title,
+        theme: c.theme,
+        region: c.region,
+        lifeCycleTags: serializeLifeStageTags(c.lifeCycleTags),
+        places: c.courseItems.map(({ place }) => ({
+          id: place.id,
+          name: place.name,
+          lat: place.lat,
+          lng: place.lng,
+          address: place.address,
+        })),
+      }));
+  } catch {
+    return [];
+  }
 }
 
 export default async function MapPage() {

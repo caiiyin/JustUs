@@ -1,10 +1,13 @@
 import Link from "next/link";
-import { Map, ChevronRight, Bell } from "lucide-react";
+import { ChevronRight, Bell, Search, Bot } from "lucide-react";
 import CourseCard from "@/components/course/CourseCard";
 import NoticeBannerClose from "@/components/ui/NoticeBannerClose";
+import HeroSearch from "@/components/home/HeroSearch";
+import PersonalizedSection from "@/components/home/PersonalizedSection";
 import { prisma } from "@/lib/prisma";
 import { serializeLifeStageTags } from "@/lib/constants";
 import { CourseListItem } from "@/types/shared";
+import { auth } from "@/auth";
 
 function mapCourse(c: {
   id: number; title: string; description: string | null; region: string; theme: string;
@@ -40,21 +43,30 @@ const INCLUDE = {
 } as const;
 
 async function getHomeData(): Promise<{ popular: CourseListItem[]; latest: CourseListItem[] }> {
-  const [popular, latest] = await Promise.all([
-    prisma.course.findMany({ include: INCLUDE, orderBy: { favorites: { _count: "desc" } }, take: 8 }),
-    prisma.course.findMany({ include: INCLUDE, orderBy: { createdAt: "desc" }, take: 3 }),
-  ]);
-  return { popular: popular.map(mapCourse), latest: latest.map(mapCourse) };
+  try {
+    const [popular, latest] = await Promise.all([
+      prisma.course.findMany({ include: INCLUDE, orderBy: { favorites: { _count: "desc" } }, take: 8 }),
+      prisma.course.findMany({ include: INCLUDE, orderBy: { createdAt: "desc" }, take: 3 }),
+    ]);
+    return { popular: popular.map(mapCourse), latest: latest.map(mapCourse) };
+  } catch {
+    return { popular: [], latest: [] };
+  }
 }
 
 export default async function HomePage() {
-  const { popular: popularCourses, latest: latestCourses } = await getHomeData();
+  const [{ popular: popularCourses, latest: latestCourses }, session] = await Promise.all([
+    getHomeData(),
+    auth(),
+  ]);
+
+  const userName = session?.user?.name ?? null;
 
   return (
     <div className="max-w-md mx-auto min-h-screen bg-gray-50 pb-20 lg:max-w-7xl lg:pb-8">
       {/* 모바일 상단 헤더 */}
       <header className="bg-white px-4 pt-12 pb-4 lg:hidden sticky top-0 z-40 shadow-sm">
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center justify-between mb-3">
           <div>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={`${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/hwaseong-logo2.jpg`} alt="화성시 로고" className="w-24 mb-1" />
@@ -66,23 +78,45 @@ export default async function HomePage() {
             <Bell size={22} className="text-gray-600" />
           </Link>
         </div>
+        {/* 검색창 + 채팅 버튼 */}
+        <div className="relative">
+          <Search size={18} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
+          <input
+            type="text"
+            placeholder="어디로 나들이 가고 싶으신가요?"
+            className="w-full pl-10 pr-12 py-3 bg-gray-100 rounded-xl text-sm text-gray-700 placeholder-gray-400 focus:outline-none"
+            readOnly
+          />
+          <button className="absolute right-3 top-1/2 -translate-y-1/2 text-[#1D4994]">
+            <Bot size={20} />
+          </button>
+        </div>
       </header>
 
-      <div className="px-4 py-4 space-y-6 lg:px-8 lg:py-8">
-        {/* 지도 배너 */}
-        <Link
-          href="/map"
-          className="flex items-center justify-between bg-[#1D4994] text-white rounded-2xl px-5 py-4 shadow-md"
-        >
-          <div className="flex items-center gap-3">
-            <Map size={28} />
-            <div>
-              <p className="font-bold text-base">지도에서 코스 확인</p>
-              <p className="text-xs opacity-80">내 주변 나들이 코스 찾기</p>
-            </div>
+      <div className="px-4 py-4 space-y-6 lg:px-8 lg:py-8 lg:bg-white">
+
+        {/* PC 전용 히어로 배너 */}
+        <div className="hidden lg:flex items-center justify-between bg-gradient-to-br from-[#EAF4FF] to-[#D9ECFF] rounded-3xl px-12 py-10">
+          <div className="flex-1 max-w-xl">
+            <p className="text-sm font-medium text-[#1D4994]/70 mb-2">생애주기별 맞춤 나들이 코스</p>
+            <h2 className="text-3xl font-bold leading-snug mb-1 text-[#1D4994]">
+              우리끼리,<br />어디로 떠날까요?
+            </h2>
+            <p className="text-sm text-[#1D4994]/60 mb-6">무엇을 도와드릴까요?</p>
+            <HeroSearch />
           </div>
-          <ChevronRight size={22} className="opacity-80" />
-        </Link>
+          <div className="hidden xl:flex items-center justify-center ml-8 select-none">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={`${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/image_251_보타닉가든코리요.png`}
+              alt=""
+              className="w-56 h-56 rounded-2xl object-cover"
+            />
+          </div>
+        </div>
+
+        {/* 맞춤 코스 추천 (온보딩 완료) / 지도 배너 (미완료) */}
+        <PersonalizedSection courses={popularCourses} userName={userName} />
 
         {/* 인기 코스 섹션 */}
         <section>

@@ -2,13 +2,12 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Map, Heart, User } from "lucide-react";
+import { Home, Map, Heart } from "lucide-react";
 
 const NAV_ITEMS = [
-  { href: "/", label: "홈", icon: Home },
-  { href: "/map", label: "지도", icon: Map },
-  { href: "/favorites", label: "즐겨찾기", icon: Heart },
-  { href: "/mypage", label: "마이페이지", icon: User },
+  { href: "/", label: "홈", icon: Home, pcHidden: true },
+  { href: "/map", label: "지도", icon: Map, pcHidden: false },
+  { href: "/favorites", label: "즐겨찾기", icon: Heart, pcHidden: false },
 ];
 
 export default function NavLinks() {
@@ -16,10 +15,10 @@ export default function NavLinks() {
 
   return (
     <ul className="flex items-center gap-2">
-      {NAV_ITEMS.map(({ href, label, icon: Icon }) => {
+      {NAV_ITEMS.map(({ href, label, icon: Icon, pcHidden }) => {
         const active = href === "/" ? pathname === "/" : pathname.startsWith(href);
         return (
-          <li key={href}>
+          <li key={href} className={pcHidden ? "lg:hidden" : ""}>
             <Link
               href={href}
               className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all ${
