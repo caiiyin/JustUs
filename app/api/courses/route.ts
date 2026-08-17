@@ -53,6 +53,11 @@ export async function GET(req: Request) {
     include: {
       _count: { select: { courseItems: true, reviews: true, favorites: true } },
       reviews: { select: { rating: true } },
+      courseItems: {
+        take: 1,
+        orderBy: { order: "asc" },
+        include: { place: { select: { image: true } } },
+      },
     },
     orderBy,
     ...(sort !== "rating" && { skip: (page - 1) * limit, take: limit }),
@@ -78,6 +83,7 @@ export async function GET(req: Request) {
       reviewCount: c._count.reviews,
       favoriteCount: c._count.favorites,
       avgRating,
+      thumbnail: c.courseItems[0]?.place.image ?? null,
     };
   });
 

@@ -36,6 +36,8 @@ function makeSvgMarker(color: string) {
   </svg>`;
 }
 
+const BASE_PATH = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
+
 export default function AllCoursesMap({ courses }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [loaded, setLoaded] = useState(false);
@@ -87,7 +89,7 @@ export default function AllCoursesMap({ courses }: Props) {
             content: `<div style="padding:8px 12px;min-width:160px;">
               <p style="font-size:13px;font-weight:700;margin:0 0 2px;">${place.name}</p>
               <p style="font-size:11px;color:#6b7280;margin:0 0 6px;">${place.address}</p>
-              <a href="/courses/${course.id}" style="font-size:12px;color:#1D4994;font-weight:600;">${course.title} →</a>
+              <a href="${BASE_PATH}/courses/${course.id}" style="font-size:12px;color:#1D4994;font-weight:600;">${course.title} →</a>
             </div>`,
             removable: true,
           });

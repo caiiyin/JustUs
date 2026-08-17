@@ -6,6 +6,8 @@ import LifecycleBadge from "@/components/ui/LifecycleBadge";
 import FavoriteButton from "@/components/course/FavoriteButton";
 import { getSession } from "@/lib/session";
 
+const BASE_PATH = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
+
 interface PlaceDetail {
   id: number;
   name: string;
@@ -44,6 +46,14 @@ async function getCourse(id: string): Promise<CourseDetailResponse | null> {
   return res.json() as Promise<CourseDetailResponse>;
 }
 
+const THEME_GRADIENTS: Record<string, string> = {
+  자연: "from-green-400 to-emerald-600",
+  문화: "from-blue-400 to-indigo-600",
+  음식: "from-orange-400 to-red-500",
+  체험: "from-violet-400 to-purple-600",
+  휴식: "from-teal-400 to-cyan-600",
+};
+
 export default async function CourseDetailPage({
   params,
 }: {
@@ -66,6 +76,11 @@ export default async function CourseDetailPage({
   const mins = course.estimatedTime % 60;
   const timeStr = hours > 0 ? `${hours}시간${mins > 0 ? ` ${mins}분` : ""}` : `${mins}분`;
 
+  const sortedPlaces = course.places.slice().sort((a, b) => a.order - b.order);
+  const headerImage = sortedPlaces[0]?.place.image;
+  const headerImgSrc = headerImage ? `${BASE_PATH}/images/${headerImage}` : null;
+  const gradient = THEME_GRADIENTS[course.theme] ?? "from-blue-400 to-indigo-600";
+
   return (
     <div className="max-w-md mx-auto min-h-screen bg-white pb-8 lg:max-w-5xl">
       {/* 헤더 */}
@@ -83,9 +98,20 @@ export default async function CourseDetailPage({
         />
       </header>
 
-      {/* 테마 배너 (이미지 대체) */}
-      <div className="relative h-48 lg:h-72 bg-gradient-to-br from-blue-400 to-indigo-600 flex items-end px-5 pb-4">
-        <div className="flex flex-wrap gap-1.5">
+      {/* 대표 이미지 배너 */}
+      <div className="relative h-52 lg:h-72 flex items-end px-5 pb-4">
+        {headerImgSrc ? (
+          /* eslint-disable-next-line @next/next/no-img-element */
+          <img
+            src={headerImgSrc}
+            alt={course.title}
+            className="absolute inset-0 w-full h-full object-cover"
+          />
+        ) : (
+          <div className={`absolute inset-0 bg-gradient-to-br ${gradient}`} />
+        )}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+        <div className="relative flex flex-wrap gap-1.5">
           {course.lifeCycleTags.map((tag) => (
             <LifecycleBadge key={tag} tag={tag} size="md" />
           ))}
@@ -133,17 +159,31 @@ export default async function CourseDetailPage({
         <section>
           <h3 className="text-base font-semibold text-gray-800 mb-3">포함 장소</h3>
           <ol className="space-y-3">
-            {course.places
-              .slice()
-              .sort((a, b) => a.order - b.order)
-              .map(({ order, place }) => (
-                <li key={place.id} className="flex gap-4 bg-gray-50 rounded-2xl p-4">
-                  <div className="flex-shrink-0 w-8 h-8 rounded-full bg-[#1D4994] text-white text-sm font-bold flex items-center justify-center">
-                    {order}
+            {sortedPlaces.map(({ order, place }) => {
+              const placeImgSrc = place.image ? `${BASE_PATH}/images/${place.image}` : null;
+              return (
+                <li key={place.id} className="flex gap-3 bg-gray-50 rounded-2xl overflow-hidden">
+                  {/* 장소 이미지 */}
+                  <div className="flex-shrink-0 w-24 h-24 relative bg-gray-200">
+                    {placeImgSrc ? (
+                      /* eslint-disable-next-line @next/next/no-img-element */
+                      <img
+                        src={placeImgSrc}
+                        alt={place.name}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full bg-gray-200" />
+                    )}
+                    <span className="absolute top-1.5 left-1.5 w-6 h-6 rounded-full bg-[#1D4994] text-white text-xs font-bold flex items-center justify-center">
+                      {order}
+                    </span>
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-gray-900">{place.name}</p>
-                    <p className="text-sm text-gray-500 truncate">{place.address}</p>
+
+                  {/* 장소 정보 */}
+                  <div className="flex-1 min-w-0 py-3 pr-3">
+                    <p className="font-semibold text-gray-900 text-sm">{place.name}</p>
+                    <p className="text-xs text-gray-500 truncate mt-0.5">{place.address}</p>
                     {place.hours && (
                       <p className="text-xs text-gray-400 mt-0.5">⏰ {place.hours}</p>
                     )}
@@ -151,7 +191,7 @@ export default async function CourseDetailPage({
                       <p className="text-xs text-gray-400">📞 {place.phone}</p>
                     )}
                     {place.lifetags.length > 0 && (
-                      <div className="mt-2 flex flex-wrap gap-1">
+                      <div className="mt-1.5 flex flex-wrap gap-1">
                         {place.lifetags.map((t) => (
                           <LifecycleBadge key={t} tag={t} size="sm" />
                         ))}
@@ -159,7 +199,8 @@ export default async function CourseDetailPage({
                     )}
                   </div>
                 </li>
-              ))}
+              );
+            })}
           </ol>
         </section>
       </div>

@@ -12,6 +12,7 @@ function mapCourse(c: {
   lifeCycleTags: Parameters<typeof serializeLifeStageTags>[0];
   _count: { courseItems: number; reviews: number; favorites: number };
   reviews: { rating: number }[];
+  courseItems: { place: { image: string | null } }[];
 }): CourseListItem {
   const ratings = c.reviews.map((r) => r.rating);
   const avgRating = ratings.length
@@ -24,12 +25,18 @@ function mapCourse(c: {
     duration: c.duration, estimatedTime: c.estimatedTime,
     placeCount: c._count.courseItems, reviewCount: c._count.reviews,
     favoriteCount: c._count.favorites, avgRating,
+    thumbnail: c.courseItems[0]?.place.image ?? null,
   };
 }
 
 const INCLUDE = {
   _count: { select: { courseItems: true, reviews: true, favorites: true } },
   reviews: { select: { rating: true } },
+  courseItems: {
+    take: 1,
+    orderBy: { order: "asc" as const },
+    include: { place: { select: { image: true } } },
+  },
 } as const;
 
 async function getHomeData(): Promise<{ popular: CourseListItem[]; latest: CourseListItem[] }> {

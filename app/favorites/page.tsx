@@ -15,6 +15,11 @@ async function getUserFavorites(userId: number): Promise<CourseListItem[]> {
         include: {
           _count: { select: { courseItems: true, reviews: true, favorites: true } },
           reviews: { select: { rating: true } },
+          courseItems: {
+            take: 1,
+            orderBy: { order: "asc" as const },
+            include: { place: { select: { image: true } } },
+          },
         },
       },
     },
@@ -40,6 +45,7 @@ async function getUserFavorites(userId: number): Promise<CourseListItem[]> {
       reviewCount: c._count.reviews,
       favoriteCount: c._count.favorites,
       avgRating,
+      thumbnail: c.courseItems[0]?.place.image ?? null,
     };
   });
 }

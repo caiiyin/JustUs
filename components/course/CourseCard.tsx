@@ -3,6 +3,8 @@ import { Star, Clock, MapPin } from "lucide-react";
 import { CourseListItem } from "@/types/shared";
 import LifecycleBadge from "@/components/ui/LifecycleBadge";
 
+const BASE_PATH = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
+
 interface CourseCardProps {
   course: CourseListItem;
   compact?: boolean;
@@ -20,6 +22,9 @@ export default function CourseCard({ course, compact = false }: CourseCardProps)
   const hours = Math.floor(course.estimatedTime / 60);
   const mins = course.estimatedTime % 60;
   const gradient = THEME_COLORS[course.theme] ?? "from-gray-400 to-gray-600";
+  const imgSrc = course.thumbnail
+    ? `${BASE_PATH}/images/${course.thumbnail}`
+    : null;
 
   return (
     <Link href={`/courses/${course.id}`} className="block">
@@ -28,11 +33,20 @@ export default function CourseCard({ course, compact = false }: CourseCardProps)
           compact ? "w-52 lg:w-full" : "w-full"
         }`}
       >
-        {/* 이미지 대신 테마 그라디언트 배너 */}
-        <div
-          className={`relative ${compact ? "h-28" : "h-36"} bg-gradient-to-br ${gradient} flex items-end p-3`}
-        >
-          <span className="text-white/90 text-xs font-medium bg-black/20 px-2 py-0.5 rounded-full">
+        {/* 썸네일 */}
+        <div className={`relative ${compact ? "h-28" : "h-36"} flex items-end p-3`}>
+          {imgSrc ? (
+            /* eslint-disable-next-line @next/next/no-img-element */
+            <img
+              src={imgSrc}
+              alt={course.title}
+              className="absolute inset-0 w-full h-full object-cover"
+            />
+          ) : (
+            <div className={`absolute inset-0 bg-gradient-to-br ${gradient}`} />
+          )}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
+          <span className="relative text-white/90 text-xs font-medium bg-black/20 px-2 py-0.5 rounded-full">
             {course.theme} · {course.region}
           </span>
         </div>

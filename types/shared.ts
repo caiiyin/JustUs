@@ -23,6 +23,7 @@ export interface CourseListItem {
   reviewCount: number;
   favoriteCount: number;
   avgRating: number | null;
+  thumbnail: string | null;
 }
 
 export interface CoursePlaceItem {
@@ -37,7 +38,7 @@ export interface CoursePlaceItem {
     phone: string | null;
     hours: string | null;
     image: string | null;
-    tags: string[];
+    lifetags: string[];
   };
 }
 
