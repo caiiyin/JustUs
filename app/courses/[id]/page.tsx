@@ -16,7 +16,7 @@ interface PlaceDetail {
   phone: string | null;
   hours: string | null;
   image: string | null;
-  tags: string[];
+  lifetags: string[];
 }
 
 interface CourseDetailResponse {
@@ -150,15 +150,10 @@ export default async function CourseDetailPage({
                     {place.phone && (
                       <p className="text-xs text-gray-400">📞 {place.phone}</p>
                     )}
-                    {place.tags.length > 0 && (
-                      <div className="mt-1 flex flex-wrap gap-1">
-                        {place.tags.map((t) => (
-                          <span
-                            key={t}
-                            className="px-1.5 py-0.5 bg-white text-gray-500 text-xs rounded border"
-                          >
-                            {t}
-                          </span>
+                    {place.lifetags.length > 0 && (
+                      <div className="mt-2 flex flex-wrap gap-1">
+                        {place.lifetags.map((t) => (
+                          <LifecycleBadge key={t} tag={t} size="sm" />
                         ))}
                       </div>
                     )}

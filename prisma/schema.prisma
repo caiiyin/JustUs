@@ -30,7 +30,7 @@ model Place {
   phone       String?
   hours       String?
   image       String?
-  tags        String[]
+  lifetags    LifeStageTag[]
   createdAt   DateTime     @default(now())
   courseItems CourseItem[]
 

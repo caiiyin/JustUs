@@ -61,7 +61,7 @@ export async function GET(
           phone: ci.place.phone,
           hours: ci.place.hours,
           image: ci.place.image,
-          tags: ci.place.tags,
+          lifetags: serializeLifeStageTags(ci.place.lifetags),
         },
       })),
       reviewCount: ratings.length,
