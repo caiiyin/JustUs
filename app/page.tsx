@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ChevronRight, Bell, Search, Bot } from "lucide-react";
 import CourseCard from "@/components/course/CourseCard";
 import NoticeBannerClose from "@/components/ui/NoticeBannerClose";
+import WeatherWidget from "@/components/ui/WeatherWidget";
 import HeroSearch from "@/components/home/HeroSearch";
 import PersonalizedSection from "@/components/home/PersonalizedSection";
 import { prisma } from "@/lib/prisma";
@@ -64,6 +65,7 @@ export default async function HomePage() {
 
   return (
     <div className="max-w-md mx-auto min-h-screen bg-gray-50 pb-20 lg:max-w-7xl lg:pb-8">
+      <WeatherWidget />
       {/* 모바일 상단 헤더 */}
       <header className="bg-white px-4 pt-12 pb-4 lg:hidden sticky top-0 z-40 shadow-sm">
         <div className="flex items-center justify-between mb-3">
