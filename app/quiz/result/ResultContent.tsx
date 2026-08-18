@@ -118,19 +118,28 @@ export default function ResultContent() {
           <div className={`bg-gradient-to-br ${gradient} relative flex flex-col justify-end p-6 lg:p-10`}
             style={{ minHeight: "220px" }}
           >
+            {course.thumbnail && (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={`${BASE_PATH}/images/${course.thumbnail}`}
+                alt={course.title}
+                className="absolute inset-0 w-full h-full object-cover"
+              />
+            )}
+            <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
             {/* 헤더 - 모바일만 */}
-            <div className="flex items-center mb-auto lg:hidden">
+            <div className="relative flex items-center mb-auto lg:hidden">
               <Link href="/quiz" className="p-1.5 rounded-xl bg-white/20 hover:bg-white/30 transition-colors">
                 <ChevronLeft size={20} className="text-white" />
               </Link>
               <span className="ml-2 text-sm font-medium text-white/70">맞춤 추천 결과</span>
             </div>
 
-            <div className="mt-8 lg:mt-0">
+            <div className="relative mt-8 lg:mt-0">
               <span className="text-white/90 text-sm font-medium bg-black/20 px-3 py-1 rounded-full">
                 {course.theme} · {course.region}
               </span>
-              <h3 className="text-xl lg:text-2xl font-bold text-white mt-3 leading-snug">
+              <h3 className="text-base lg:text-lg font-bold text-white mt-3 leading-snug">
                 {course.title}
               </h3>
             </div>
