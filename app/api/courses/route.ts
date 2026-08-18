@@ -8,6 +8,7 @@ export async function GET(req: Request) {
   const lifeStage = searchParams.get("lifeStage");
   const region = searchParams.get("region");
   const theme = searchParams.get("theme");
+  const maxTime = searchParams.get("maxTime");
   const sort = searchParams.get("sort") ?? "latest";
   const page = Math.max(1, Number(searchParams.get("page") ?? "1") || 1);
   const limit = Math.min(50, Math.max(1, Number(searchParams.get("limit") ?? "10") || 10));
@@ -32,6 +33,7 @@ export async function GET(req: Request) {
     ...(tagFilter && { lifeCycleTags: { has: tagFilter } }),
     ...(region && { region: { contains: region } }),
     ...(theme && { theme: { contains: theme } }),
+    ...(maxTime && { estimatedTime: { lte: Number(maxTime) } }),
   };
 
   // 정렬 기준에 따라 orderBy 결정

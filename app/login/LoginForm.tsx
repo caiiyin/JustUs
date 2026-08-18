@@ -2,9 +2,11 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Eye, EyeOff, MapPin } from "lucide-react";
+import { Eye, EyeOff } from "lucide-react";
 import { useFormStatus } from "react-dom";
 import { loginAction } from "@/lib/actions";
+
+const BASE_PATH = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
 
 function SubmitButton() {
   const { pending } = useFormStatus();
@@ -35,10 +37,9 @@ export default function LoginForm({
     <div className="min-h-screen bg-white flex flex-col px-6 py-10 lg:bg-[#EAF2FB] lg:items-center lg:justify-center">
       <div className="w-full max-w-md lg:bg-white lg:rounded-2xl lg:shadow-xl lg:px-10 lg:py-12">
         <div className="flex flex-col items-center gap-3 mb-10 mt-6">
-          <div className="w-14 h-14 bg-emerald-500 rounded-2xl flex items-center justify-center shadow-md">
-            <MapPin size={28} className="text-white" strokeWidth={1.8} />
-          </div>
-          <h1 className="text-xl font-bold text-gray-900">나들이 로그인</h1>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={`${BASE_PATH}/logo_round.png`} alt="로고" className="w-24 h-24 object-contain" />
+          <h1 className="text-xl font-bold text-gray-900">로그인</h1>
         </div>
 
         {registered && (
