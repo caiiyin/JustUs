@@ -62,16 +62,15 @@ export default function EventTicker() {
   const days = daysUntil(current.startDate);
 
   return (
-    <dl className="relative flex items-center mb-3 rounded-full overflow-visible" style={{ height: "48px" }}>
-      {/* dt: 진한 청록 라벨 */}
-      <dt className="flex items-center justify-center bg-[#2a9d8f] text-white px-5 h-full rounded-l-full flex-shrink-0 z-10">
+    <div className="relative flex items-center mb-3 rounded-full overflow-visible" style={{ height: "48px" }}>
+      {/* 라벨 */}
+      <div className="flex items-center justify-center bg-[#2a9d8f] text-white px-5 self-stretch rounded-l-full flex-shrink-0 z-10">
         <span className="text-sm font-bold whitespace-nowrap">화성시 행사</span>
-      </dt>
+      </div>
 
-      {/* dd: 연한 청록 배경 + 슬라이딩 텍스트 */}
-      <dd
-        className="flex items-center gap-2 bg-[#e0f5f2] h-full overflow-hidden min-w-0 rounded-r-full pr-14"
-        style={{ flex: 1 }}
+      {/* 텍스트 영역 */}
+      <div
+        className="flex flex-1 items-center gap-2 bg-[#e0f5f2] self-stretch overflow-hidden min-w-0 rounded-r-full pr-14"
       >
         <div
           className="flex-1 overflow-hidden px-4"
@@ -103,7 +102,7 @@ export default function EventTicker() {
             오늘
           </span>
         )}
-      </dd>
+      </div>
 
       {/* 오른쪽 캐릭터 이미지 */}
       {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -113,6 +112,6 @@ export default function EventTicker() {
         className="absolute right-1 object-contain pointer-events-none"
         style={{ height: "60px", bottom: "-6px" }}
       />
-    </dl>
+    </div>
   );
 }
