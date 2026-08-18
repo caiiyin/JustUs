@@ -18,14 +18,22 @@ interface Props {
 
 const THEME_COLORS: Record<string, string> = {
   자연: "#22c55e",
-  문화: "#3b82f6",
+  힐링: "#14b8a6",
+  역사: "#3b82f6",
+  문화: "#6366f1",
+  해양: "#0ea5e9",
+  감성: "#ec4899",
   음식: "#f97316",
+  미식: "#f59e0b",
   체험: "#a855f7",
-  휴식: "#14b8a6",
+  반려동물: "#84cc16",
 };
 
 function themeColor(theme: string) {
-  return THEME_COLORS[theme] ?? "#6b7280";
+  for (const [key, color] of Object.entries(THEME_COLORS)) {
+    if (theme.includes(key)) return color;
+  }
+  return "#1D4994";
 }
 
 function makeSvgMarker(color: string) {
