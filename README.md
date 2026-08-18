@@ -1,36 +1,35 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 우리끼리 — 생애주기별 여가 나들이 코스 추천 플랫폼
 
-## Getting Started
+> 「AI화성 챌린지」 출품작
 
-First, run the development server:
+화성시 시민의 생애주기에 맞는 나들이 코스를 추천하는 서비스입니다.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+---
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## 생애주기 태그 8종
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+`영유아 동반` `어린이 동반` `청소년` `청년·1인` `커플·신혼` `중장년` `시니어` `반려동물 동반`
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+---
 
-## Learn More
+## 주요 기능
 
-To learn more about Next.js, take a look at the following resources:
+- **맞춤 코스 추천** — 생애주기 태그 기반으로 개인화 코스 자동 추천
+- **코스 탐색** — 지역·테마·소요 시간 필터로 코스 검색
+- **맞춤 코스 퀴즈** — 분위기·시간·지역 3단계 질문으로 최적 코스 추천
+- **코스 상세** — 포함 장소, 이동 동선 지도, 예상 소요 시간 제공
+- **지도 보기** — 화성시 전 코스를 카카오맵으로 시각화
+- **즐겨찾기** — 마음에 드는 코스 저장 및 관리
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+---
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## 기술 스택
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+| 분류 | 기술 |
+|------|------|
+| Frontend | Next.js 16, React 19, Tailwind CSS v4 |
+| Backend | Next.js API Routes, Prisma ORM |
+| Database | PostgreSQL (Supabase) |
+| 인증 | NextAuth v5 |
+| 지도 | 카카오맵 API |
+| 배포 | Cloudflare Workers |
