@@ -5,6 +5,7 @@ import CourseMap, { type CoursePlace } from "@/components/CourseMap";
 import LifecycleBadge from "@/components/ui/LifecycleBadge";
 import FavoriteButton from "@/components/course/FavoriteButton";
 import { getSession } from "@/lib/session";
+import { getRestaurantsByRegion, getCategoryEmoji } from "@/lib/restaurants";
 
 const BASE_PATH = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
 
@@ -75,6 +76,8 @@ export default async function CourseDetailPage({
   const hours = Math.floor(course.estimatedTime / 60);
   const mins = course.estimatedTime % 60;
   const timeStr = hours > 0 ? `${hours}시간${mins > 0 ? ` ${mins}분` : ""}` : `${mins}분`;
+
+  const nearbyRestaurants = getRestaurantsByRegion(course.region);
 
   const sortedPlaces = course.places.slice().sort((a, b) => a.order - b.order);
   const headerImage = sortedPlaces[0]?.place.image;
@@ -209,6 +212,40 @@ export default async function CourseDetailPage({
               })}
             </ol>
           </section>
+
+          {/* 주변 모범음식점 */}
+          {nearbyRestaurants.length > 0 && (
+            <section className="px-4 pb-8 lg:px-0 lg:pb-0">
+              <div className="flex items-center gap-2 mb-1">
+                <h3 className="text-base font-semibold text-gray-800">주변 모범음식점</h3>
+              </div>
+              <p className="text-xs text-gray-400 mb-3">화성특례시 선정 · 위생정책과</p>
+              <ol className="space-y-2">
+                {nearbyRestaurants.map((r, i) => (
+                  <li key={i} className="flex items-center gap-3 bg-gray-50 rounded-2xl px-4 py-3">
+                    <span className="text-xl flex-shrink-0">{getCategoryEmoji(r.category)}</span>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <p className="font-semibold text-sm text-gray-900">{r.name}</p>
+                        <span className="text-[10px] px-1.5 py-0.5 bg-orange-100 text-orange-700 rounded-full flex-shrink-0">
+                          {r.category}
+                        </span>
+                      </div>
+                      <p className="text-xs text-gray-400 truncate mt-0.5">
+                        {r.address.replace("경기도 화성시 ", "")}
+                      </p>
+                    </div>
+                    <a
+                      href={`tel:${r.phone}`}
+                      className="text-xs text-[#1D4994] font-medium flex-shrink-0 hover:underline"
+                    >
+                      {r.phone}
+                    </a>
+                  </li>
+                ))}
+              </ol>
+            </section>
+          )}
         </div>
 
         {/* ── 오른쪽 (PC 전용): 정보 요약 + 지도 ── */}

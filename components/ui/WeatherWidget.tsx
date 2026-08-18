@@ -73,8 +73,8 @@ export default function WeatherWidget() {
 
       {/* 3일 예보 */}
       <div className="divide-y divide-gray-100">
-        {forecast.map((f) => (
-          <div key={f.day} className="flex items-center justify-between px-3 py-2">
+        {forecast.map((f, i) => (
+          <div key={i} className="flex items-center justify-between px-3 py-2">
             <span className="text-[10px] text-gray-500 w-10">{f.day}</span>
             <span className="text-sm">{f.emoji}</span>
             <span className="text-[10px] text-gray-400">{f.min}°</span>
