@@ -2,11 +2,11 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Map, ChevronRight, MapPin, Sparkles } from "lucide-react";
+import { Map, MapPin, Sparkles } from "lucide-react";
 import CourseCard from "@/components/course/CourseCard";
+import EventTicker from "@/components/ui/EventTicker";
 import type { CourseListItem, LifecycleTag } from "@/types/shared";
 
-const BASE_PATH = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
 
 interface Props {
   courses: CourseListItem[];
@@ -15,6 +15,8 @@ interface Props {
 
 function TwoBanners() {
   return (
+    <div>
+    <EventTicker />
     <div className="grid grid-cols-2 gap-3">
       {/* 지도 배너 */}
       <Link
@@ -32,7 +34,7 @@ function TwoBanners() {
 
       {/* 퀴즈 배너 */}
       <Link
-        href={`${BASE_PATH}/quiz`}
+        href="/quiz"
         className="flex flex-col gap-3 bg-white text-[#1D4994] rounded-2xl px-4 py-5 shadow-sm border border-[#1D4994]/15"
       >
         <div className="w-10 h-10 rounded-xl bg-[#EAF2FB] flex items-center justify-center">
@@ -43,6 +45,7 @@ function TwoBanners() {
           <p className="text-xs text-[#1D4994]/60 mt-0.5">나에게 맞는 코스 찾기</p>
         </div>
       </Link>
+    </div>
     </div>
   );
 }
